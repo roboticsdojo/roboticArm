@@ -1,6 +1,14 @@
 #include <Arduino.h>
 #include <motor_encoder.h>
 
+
+bool turning = false;
+
+// IR Sensor. Normally LOW, HIGH when detects black line
+#define right_sensor 21
+#define middle_sensor 20
+#define left_sensor 22
+
 // Define pins connected the encoders A & B
 // A -> Left; B -> Right
 #define RIGHT_ENCA 18 // Yellow
@@ -11,6 +19,10 @@
 // Motor Encoder Pulses per Rotation
 #define MOTOR_SPEED -200
 #define ENCODERPPR 66
+
+
+#define farLeft 25
+#define farRight 24
 
 // Motor Driver
 #define enableLeftMotor 4
@@ -52,6 +64,7 @@ void rotateMotor(int rightMotorSpeed, int leftMotorSpeed);
 
 // MobilePlatform platform(19, 20, 10, 11, 8, 9, 5, 4);
 
+
 void setup()
 {
   //******* alt code
@@ -62,13 +75,18 @@ void setup()
   pinMode(middle_sensor, INPUT);
   pinMode(left_sensor, INPUT);
 
-  // The problem with TT gear motoLOWrs is that, at very low pwm value it does not even rotate.
-  // If we increase the PWM value then it rotates faster and our robot is not controlled in that speed and goes out of line.
-  // For that we need to increase the frequency of analogWrite.
-  // Below line is important to change the frequency of PWM signal on pin D5 and D6
-  // Because of this, motor runs in controlled manner (lower speed) at high PWM value.
-  // This sets frequecny as 7812.5 hz.
+
+  pinMode(farLeft, INPUT);
+  pinMode(farLeft, INPUT);
+
+  //The problem with TT gear motoLOWrs is that, at very low pwm value it does not even rotate.
+  //If we increase the PWM value then it rotates faster and our robot is not controlled in that speed and goes out of line.
+  //For that we need to increase the frequency of analogWrite.
+  //Below line is important to change the frequency of PWM signal on pin D5 and D6
+  //Because of this, motor runs in controlled manner (lower speed) at high PWM value.
+  //This sets frequecny as 7812.5 hz.
   TCCR0B = TCCR0B & (B11111000 | B00000010);
+  
 
   // Motor Encoders
   pinMode(LEFT_ENCA, INPUT);
@@ -97,11 +115,39 @@ void setup()
 
 void loop()
 {
+  int farTurnValues[] = {
+    digitalRead(farRight),
+    digitalRead(farLeft)
+  };
+
+  if (farTurnValues[0]){
+  // Serial.println("Far Right Detected");
+  rotateMotor(0, 0);
+  rotateMotor(-MOTOR_SPEED, MOTOR_SPEED);
+  
+  delay(3000);
+  turning = false;
+  }
+  
+  if (farTurnValues[1]) {
+    // Serial.println("Far Left Detected");
+    // rotateMotor(0, 0);
+    // turning = true;
+  }
+
 
   int sensorValues[] = {
       digitalRead(left_sensor),
       digitalRead(middle_sensor),
       digitalRead(right_sensor)};
+
+
+  if (!sensorValues[0] && !sensorValues[1] && !sensorValues[2] && !turning)//0 0 0
+  {
+    // Serial.println("All white");
+    rotateMotor(MOTOR_SPEED+20, MOTOR_SPEED+20);
+  }
+  else if (!sensorValues[0] && !sensorValues[1] && sensorValues[2] && !turning)//0 0 1
 
   if (!sensorValues[0] && !sensorValues[1] && !sensorValues[2]) // 0 0 0
   {
@@ -113,40 +159,75 @@ void loop()
     // Serial.println("Correction: turn right");
     rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
   }
+
+  else if (!sensorValues[0] && sensorValues[1] && !sensorValues[2] && !turning)//0 1 0
+
   else if (!sensorValues[0] && sensorValues[1] && !sensorValues[2]) // 0 1 0
   {
     // Serial.println("Forward");
     rotateMotor(MOTOR_SPEED, MOTOR_SPEED); // Right  Left
   }
+  else if (!sensorValues[0] && sensorValues[1] && sensorValues[2] && !turning)//0 1 1
+
   else if (!sensorValues[0] && sensorValues[1] && sensorValues[2]) // 0 1 1
+
   {
-    Serial.println("90 deg right Turn");
+    // Serial.println("90 deg right Turn");
     rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
   }
+
+  else if (sensorValues[0] && !sensorValues[1] && !sensorValues[2]&& !turning)//1 0 0
+
   else if (sensorValues[0] && !sensorValues[1] && !sensorValues[2]) // 1 0 0
+
   {
     // Serial.println("Correction: turn left");
     rotateMotor(-MOTOR_SPEED, MOTOR_SPEED);
   }
+
+  else if (sensorValues[0] && !sensorValues[1] && sensorValues[2] && !turning)//1 0 1
+
   else if (sensorValues[0] && !sensorValues[1] && sensorValues[2]) // 1 0 1
+
   {
-    Serial.println("Impossible");
+    // Serial.println("Impossible");
     rotateMotor(0, 0);
   }
+
+  else if (sensorValues[0] && sensorValues[1] && !sensorValues[2] && !turning)//1 1 0
+
   else if (sensorValues[0] && sensorValues[1] && !sensorValues[2]) // 1 1 0
+
   {
-    Serial.println("90 deg left Turn");
+    // Serial.println("90 deg left Turn");
     rotateMotor(-MOTOR_SPEED, MOTOR_SPEED);
     // delay(3000);
   }
+
+  else if (sensorValues[0] && sensorValues[1] && sensorValues[2] && !turning)//1 1 1
+
   else if (sensorValues[0] && sensorValues[1] && sensorValues[2]) // 1 1 1
+
   {
     // Serial.println("Sharp Left/Sharp Right");
     rotateMotor(0, 0);
   }
 
+
+  // if (farTurnValues[1]) //
+  // {
+  //   Serial.println("Far Right Detected");
+  // }
+  // if (farTurnValues[0])
+  // {
+  //   Serial.println("Far Left Detected");
+  // }
+
+  // delay(1000);
+
   // ------------------------- Motor Controller PID LOOP -------------------------
   PIDLoop(leftEncoderPosition, rightEncoderPosition, current_millis, previous_millis, prevT, eprev, eintegral, enableLeftMotor, enableRightMotor, leftMotorPin1, leftMotorPin2, rightMotorPin1, rightMotorPin2);
+
 
   // platform.loop();
   //******* alt code
