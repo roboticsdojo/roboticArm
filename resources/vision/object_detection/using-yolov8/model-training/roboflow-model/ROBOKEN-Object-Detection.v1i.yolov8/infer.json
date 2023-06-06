@@ -1,0 +1,16 @@
+{"predictions": [
+    {
+        "x": 264.5,
+        "y": 235.0,
+        "width": 405.0,
+        "height": 376.0,
+        "confidence": 0.7490726709365845,
+        "class": "trailer",
+        "image_path": "./valid/images/20230525_163046_jpg.rf.afb9e90b58c1d28fba6479be64598bd9.jpg",
+        "prediction_type": "ObjectDetectionModel"
+    }],
+    "image": {
+        "width": "640",
+        "height": "640"
+        }
+}

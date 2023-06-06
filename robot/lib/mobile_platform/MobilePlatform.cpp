@@ -2,6 +2,7 @@
 
 MobilePlatform::MobilePlatform() {
   turning = false;
+  stop = false;
 }
 
 void MobilePlatform::setup() {
@@ -9,6 +10,22 @@ void MobilePlatform::setup() {
   configurePWMFrequency();
   rotateMotor(0, 0);
 }
+int MobilePlatform:: getDistance() {
+  // Clears the trigPin
+  digitalWrite(TRIGPIN, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(TRIGPIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIGPIN, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  int duration = pulseIn(ECHOPIN, HIGH);
+  // Calculating the distance
+  int distance = duration * 0.034 / 2;
+  
+  return distance;
+}
+
 
 void MobilePlatform::configurePins() {
   pinMode(RIGHT_SENSOR, INPUT);
@@ -25,6 +42,9 @@ void MobilePlatform::configurePins() {
   pinMode(ENABLE_RIGHT_MOTOR, OUTPUT);
   pinMode(LEFT_MOTOR_PIN1, OUTPUT);
   pinMode(LEFT_MOTOR_PIN2, OUTPUT);
+
+  pinMode(TRIGPIN, OUTPUT);
+  pinMode(ECHOPIN, INPUT);  
 }
 
 void MobilePlatform::configurePWMFrequency() {
@@ -32,15 +52,39 @@ void MobilePlatform::configurePWMFrequency() {
   TCCR0B = TCCR0B & (B11111000 | B00000010);
 }
 
+int turn = 0;
+unsigned long current = 0;
 void MobilePlatform::loop() {
-  handleFarTurnValues();
+  if (turn == 0) {
+    stop = true;
+    handleFarTurnValues();
+  }
   handleSensorValues();
+
+  if (stop && getDistance() == 25) {
+    rotateMotor(0, 0);
+    
+    // Pick  stuff
+      delay(5000);
+
+
+    // Turn 180 degrees
+      rotateMotor(-(220), 220);
+      delay(10000); //Move right
+      
+      turn = 0;
+      // current = millis();
+  }
+
+  // if (turn == 10 && millis() - current >= 2000)
+  //   turn = 0;
 }
 
 void MobilePlatform::handleFarTurnValues() {
   int farTurnValues[] = {digitalRead(FAR_RIGHT), digitalRead(FAR_LEFT)};
 
   if (farTurnValues[0]) {//Far right
+
     rotateMotor(-(-254), -254);
     delay(4500);
   }
@@ -49,6 +93,25 @@ void MobilePlatform::handleFarTurnValues() {
     rotateMotor(-254, -(-254));
     delay(4000);
   }
+    delay(100);
+    
+    farTurnValues[0] = digitalRead(FAR_RIGHT);
+    if (farTurnValues[0])
+    {
+      turn = 100;
+      rotateMotor(-(220), 220);
+      delay(4000);
+      rotateMotor(0, 0);
+      delay(1000);
+    }
+    // if (farTurnValues[0])
+    // {
+    //   while (true)
+    //   {
+    //     rotateMotor(0, 0);
+    //     delay(4500);
+    //   }
+   
     
     
     // while(!digitalRead(LEFT_SENSOR) && !digitalRead(MIDDLE_SENSOR) && !digitalRead(RIGHT_SENSOR))

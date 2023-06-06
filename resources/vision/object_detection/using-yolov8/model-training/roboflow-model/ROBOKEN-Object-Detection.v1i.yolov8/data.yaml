@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 3
+names: ['engine', 'trailer', 'wheel']
+
+roboflow:
+  workspace: robotics-dojo
+  project: roboken-object-detection
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/robotics-dojo/roboken-object-detection/dataset/1

@@ -3,6 +3,8 @@
 #include "MobilePlatform.h"
 #include "Preferences.h"
 
+
+
 MobilePlatform platform;
 
 // // Encoder-Related Variables
@@ -27,7 +29,7 @@ void setup()
   platform.setup();
   Serial.begin(9600);
   
-  delay(20000);
+  delay(2000);
 
 //   // Motor Encoders
 //   pinMode(LEFT_ENCA, INPUT);
@@ -42,6 +44,22 @@ void setup()
 void loop()
 {
   platform.loop();
+
+  // Serial.println(platform.getDistance());
+  // delay(5000);
+  // Serial.print(" Left: ");
+  // Serial.println(digitalRead(LEFT_SENSOR));
+  // Serial.print(" Middle: ");
+  // Serial.println(digitalRead(MIDDLE_SENSOR));
+  // Serial.print(" Right: ");
+  // Serial.println(digitalRead(RIGHT_SENSOR));
+  // Serial.print(" Far Left: ");
+  // Serial.println(digitalRead(FAR_LEFT));
+  // Serial.print(" Far Right: ");
+  // Serial.println(digitalRead(FAR_RIGHT));
+  // Serial.println("***********************");
+  // Serial.println("");
+  // delay(5000);
 }
 
 //   // ------------------------- Motor Controller PID LOOP -------------------------

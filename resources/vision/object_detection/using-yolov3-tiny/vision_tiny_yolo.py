@@ -8,7 +8,7 @@ net = cv2.dnn.readNet("yolov3-tiny.weights", "yolov3-tiny.cfg")
 output_layers = net.getUnconnectedOutLayersNames()
 
 # Connect to the video stream
-cap = cv2.VideoCapture("http://192.168.188.104:8080/video")
+cap = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
 frame_id = 0
 
 while True:

@@ -7,6 +7,7 @@
 class MobilePlatform {
   private:
     bool turning = false;
+    bool stop = false;
     void rotateMotor(int rightMotorSpeed, int leftMotorSpeed);
     void setMotorState(int motorPin1, int motorPin2, int motorSpeed);
     void handleFarTurnValues();
@@ -18,6 +19,7 @@ class MobilePlatform {
     MobilePlatform();
     void setup();
     void loop();
+    int getDistance();
 };
 
 #endif
