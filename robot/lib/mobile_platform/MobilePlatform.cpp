@@ -84,6 +84,15 @@ void MobilePlatform::handleFarTurnValues() {
   int farTurnValues[] = {digitalRead(FAR_RIGHT), digitalRead(FAR_LEFT)};
 
   if (farTurnValues[0]) {//Far right
+
+    rotateMotor(-(-254), -254);
+    delay(4500);
+  }
+  else if (farTurnValues[1]) { //Far left
+    //Serial.println("Turn Left");
+    rotateMotor(-254, -(-254));
+    delay(4000);
+  }
     delay(100);
     
     farTurnValues[0] = digitalRead(FAR_RIGHT);
@@ -102,9 +111,7 @@ void MobilePlatform::handleFarTurnValues() {
     //     rotateMotor(0, 0);
     //     delay(4500);
     //   }
-    }
-
-    
+   
     
     
     // while(!digitalRead(LEFT_SENSOR) && !digitalRead(MIDDLE_SENSOR) && !digitalRead(RIGHT_SENSOR))
@@ -122,7 +129,6 @@ void MobilePlatform::handleFarTurnValues() {
   //   }
     
   // }
-// }
 
 void MobilePlatform::handleSensorValues() {
   int sensorValues[] = {
