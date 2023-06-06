@@ -1,0 +1,19 @@
+#ifndef PREFERENCES_H
+#define PREFERENCES_H
+
+// Mobile Platform
+#define MOTOR_SPEED -220
+#define RIGHT_SENSOR 21
+#define MIDDLE_SENSOR 20
+#define LEFT_SENSOR 22
+#define FAR_LEFT 25
+#define FAR_RIGHT 24
+#define ENABLE_LEFT_MOTOR 6
+#define ENABLE_RIGHT_MOTOR 5
+#define LEFT_MOTOR_PIN1 8
+#define LEFT_MOTOR_PIN2 9
+#define RIGHT_MOTOR_PIN1 10
+#define RIGHT_MOTOR_PIN2 11
+#define TRIGPIN 3
+#define ECHOPIN 4
+#endif // PREFERENCES_H
