@@ -39,11 +39,17 @@ void setup()
 
 //   attachInterrupt(digitalPinToInterrupt(LEFT_ENCA), readLeftEncoder, RISING);
 //   attachInterrupt(digitalPinToInterrupt(RIGHT_ENCA), readRightEncoder, RISING);
+pinMode(A0, INPUT);
+pinMode(A1, INPUT);
 }
 
 void loop()
 {
   platform.loop();
+  // Serial.println(analogRead(A0));
+  // Serial.println(analogRead(A1));
+  // Serial.println("**************");
+  // delay(6000);
 
   // Serial.println(platform.getDistance());
   // delay(5000);

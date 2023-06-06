@@ -2,12 +2,12 @@
 #define PREFERENCES_H
 
 // Mobile Platform
-#define MOTOR_SPEED -220
+#define MOTOR_SPEED -240
 #define RIGHT_SENSOR 21
 #define MIDDLE_SENSOR 20
 #define LEFT_SENSOR 22
-#define FAR_LEFT 25
-#define FAR_RIGHT 24
+#define FAR_LEFT A1
+#define FAR_RIGHT A0
 #define ENABLE_LEFT_MOTOR 6
 #define ENABLE_RIGHT_MOTOR 5
 #define LEFT_MOTOR_PIN1 8

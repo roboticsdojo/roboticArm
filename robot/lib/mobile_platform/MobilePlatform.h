@@ -27,7 +27,7 @@ class MobilePlatform {
     void setState();
 
     //Right: 1, left: -1, ignore 0
-    int turns[50] = {1, 0, 0, 1, -1};
+    int turns[50] = {1, -1, -1, -1, -1, -1, -1};
     int counter = 0;
 
   public:

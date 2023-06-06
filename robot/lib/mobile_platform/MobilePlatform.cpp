@@ -54,25 +54,64 @@ void MobilePlatform::configurePWMFrequency() {
 
 void MobilePlatform::loop() {
   setState();
-  Serial.println(currentState);
-  delay(6000);
+  // Serial.println(currentState);
+  // delay(6000);
   if (currentState == MOVING_FORWARD){
     //Move forward
     handleSensorValues();
   }
   if (currentState == TURNING_RIGHT) {
     //Turn Right
-    rotateMotor(-(220), 220);
-    delay(4000);
     rotateMotor(0, 0);
-    delay(1000);
+    bool rot = true;
+    while (true) {
+      if (rot)
+        rotateMotor(-(220), 220);
+      if (analogRead(A0) >= 750) {
+        rot = false;
+        delay(100);
+        if (analogRead(A0) >= 750) {
+          rotateMotor(0, 0);
+          rot = false;
+          delay(1000);
+          while (true)
+            delay(1000);
+        }
+        // break;
+      }
+    }
+    
+    
+    // rotateMotor(-220, 220);
+    // delay(5000);
+    rotateMotor(0, 0);
+    while (true) {
+      rotateMotor(-220, 220);
+      if (digitalRead(RIGHT_SENSOR)) {
+        break;
+      }
+    }
+    // rotateMotor(0, 0);
+    // delay(1000);
   }
   if (currentState == TURNING_LEFT) {
     //Turn Left
-    rotateMotor(220, -220);
-    delay(4000);
     rotateMotor(0, 0);
-    delay(1000);
+    while (true) {
+      rotateMotor(220, -220);
+      if (analogRead(A0) >= 750) {
+        rotateMotor(0, 0);
+        break;
+      }
+    }
+
+    while (true)
+      delay(2000);
+    delay(5000);
+    rotateMotor(-220, -220);
+    delay(2000);
+    // rotateMotor(0, 0);
+    // delay(1000);
   }
   if (currentState == TURNING_180) {
     //turn 180
@@ -86,44 +125,61 @@ void MobilePlatform::loop() {
     rotateMotor(0, 0);
     //pick stuff
     delay(5000);
+    // while(true) {
+    //   rotateMotor(0, 0);
+    // }
     currentState = TURNING_180;
+    rotateMotor(-(220), 220);
+    delay(10000);
+    rotateMotor(0, 0);
+    delay(1000);
   }
 }
 
 void MobilePlatform::setState() {
   if (handleFarTurnValues() == 0) {
     currentState = MOVING_FORWARD;
-    // return;
+    return;
   }
   if (handleFarTurnValues() == 1) {
     // intercection detected
     //Decide left or right or 180
     int turn = turns[counter];
-    if (turn == 1)
+    if (turn == 1) {
       currentState = TURNING_RIGHT;
-    else if (turn == -1)
+      counter++;
+      return;
+    }
+    else if (turn == -1){
       currentState = TURNING_LEFT;
-    else if (turn == 0)
+      counter++;
+      return;
+    }
+    else if (turn == 0) {
       currentState = MOVING_FORWARD;
-    counter++;
+      return;
+    }
+    
   }
-
-  if (getDistance() <= 30) {
+  if (getDistance() == 30) {
     currentState = STOP;
-    // return;
+    return;
   }
 }
 
 int MobilePlatform::handleFarTurnValues() {
-  int farTurnValues[] = {digitalRead(FAR_RIGHT), digitalRead(FAR_LEFT)};
+  // int farTurnValues[] = {digitalRead(FAR_RIGHT), digitalRead(FAR_LEFT)};
+  int farTurnValues[] = {analogRead(FAR_RIGHT), analogRead(FAR_LEFT)};
+  
 
-  if (farTurnValues[0] || farTurnValues[1]) {//Far right
+
+  if (farTurnValues[0] > 750 || farTurnValues[1] > 750) {//Far right
     delay(100);
     
-    farTurnValues[0] = digitalRead(FAR_RIGHT);
-    farTurnValues[1] = digitalRead(FAR_LEFT);
+    farTurnValues[0] = analogRead(FAR_RIGHT);
+    farTurnValues[1] = analogRead(FAR_LEFT);
 
-    if (farTurnValues[0] || farTurnValues[1])
+    if (farTurnValues[0] > 750 || farTurnValues[1] > 750)
     {
       // // turn = 100;
       // 
