@@ -52,77 +52,89 @@ void MobilePlatform::configurePWMFrequency() {
   TCCR0B = TCCR0B & (B11111000 | B00000010);
 }
 
-int turn = 0;
-unsigned long current = 0;
 void MobilePlatform::loop() {
-  if (turn == 0) {
-    stop = true;
-    handleFarTurnValues();
+  setState();
+  Serial.println(currentState);
+  delay(6000);
+  if (currentState == MOVING_FORWARD){
+    //Move forward
+    handleSensorValues();
   }
-  handleSensorValues();
-
-  if (stop && getDistance() == 25) {
+  if (currentState == TURNING_RIGHT) {
+    //Turn Right
+    rotateMotor(-(220), 220);
+    delay(4000);
     rotateMotor(0, 0);
-    
-    // Pick  stuff
-      delay(5000);
-
-
-    // Turn 180 degrees
-      rotateMotor(-(220), 220);
-      delay(10000); //Move right
-      
-      turn = 0;
-      // current = millis();
+    delay(1000);
   }
-
-  // if (turn == 10 && millis() - current >= 2000)
-  //   turn = 0;
+  if (currentState == TURNING_LEFT) {
+    //Turn Left
+    rotateMotor(220, -220);
+    delay(4000);
+    rotateMotor(0, 0);
+    delay(1000);
+  }
+  if (currentState == TURNING_180) {
+    //turn 180
+    rotateMotor(-(220), 220);
+    delay(10000);
+    rotateMotor(0, 0);
+    delay(1000);
+  }
+  if (currentState == STOP) {
+    //stop
+    rotateMotor(0, 0);
+    //pick stuff
+    delay(5000);
+    currentState = TURNING_180;
+  }
 }
 
-void MobilePlatform::handleFarTurnValues() {
+void MobilePlatform::setState() {
+  if (handleFarTurnValues() == 0) {
+    currentState = MOVING_FORWARD;
+    // return;
+  }
+  if (handleFarTurnValues() == 1) {
+    // intercection detected
+    //Decide left or right or 180
+    int turn = turns[counter];
+    if (turn == 1)
+      currentState = TURNING_RIGHT;
+    else if (turn == -1)
+      currentState = TURNING_LEFT;
+    else if (turn == 0)
+      currentState = MOVING_FORWARD;
+    counter++;
+  }
+
+  if (getDistance() <= 30) {
+    currentState = STOP;
+    // return;
+  }
+}
+
+int MobilePlatform::handleFarTurnValues() {
   int farTurnValues[] = {digitalRead(FAR_RIGHT), digitalRead(FAR_LEFT)};
 
-  if (farTurnValues[0]) {//Far right
+  if (farTurnValues[0] || farTurnValues[1]) {//Far right
     delay(100);
     
     farTurnValues[0] = digitalRead(FAR_RIGHT);
-    if (farTurnValues[0])
+    farTurnValues[1] = digitalRead(FAR_LEFT);
+
+    if (farTurnValues[0] || farTurnValues[1])
     {
-      turn = 100;
-      rotateMotor(-(220), 220);
-      delay(4000);
-      rotateMotor(0, 0);
-      delay(1000);
+      // // turn = 100;
+      // 
+      
+      // decide where to turn
+      return 1;
     }
-    // if (farTurnValues[0])
-    // {
-    //   while (true)
-    //   {
-    //     rotateMotor(0, 0);
-    //     delay(4500);
-    //   }
     }
-
-    
-    
-    
-    // while(!digitalRead(LEFT_SENSOR) && !digitalRead(MIDDLE_SENSOR) && !digitalRead(RIGHT_SENSOR))
-    //   continue;
-
-    // handleSensorValues();
+    return (0);
   }
 
-  // if (farTurnValues[1])
-  // {
-  //   while (true)
-  //   {
-  //     Serial.println(farTurnValues[1]);
-  //     delay(3000);
-  //   }
-    
-  // }
-// }
 
 void MobilePlatform::handleSensorValues() {
   int sensorValues[] = {
