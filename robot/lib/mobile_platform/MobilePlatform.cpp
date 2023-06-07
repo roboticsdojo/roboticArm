@@ -45,6 +45,9 @@ void MobilePlatform::configurePins() {
 
   pinMode(TRIGPIN, OUTPUT);
   pinMode(ECHOPIN, INPUT);  
+
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
 }
 
 void MobilePlatform::configurePWMFrequency() {
@@ -53,87 +56,92 @@ void MobilePlatform::configurePWMFrequency() {
 }
 
 void MobilePlatform::loop() {
-  setState();
-  // Serial.println(currentState);
-  // delay(6000);
-  if (currentState == MOVING_FORWARD){
-    //Move forward
-    handleSensorValues();
-  }
-  if (currentState == TURNING_RIGHT) {
-    //Turn Right
-    rotateMotor(0, 0);
-    bool rot = true;
-    while (true) {
-      if (rot)
-        rotateMotor(-(220), 220);
-      if (analogRead(A0) >= 750) {
-        rot = false;
-        delay(100);
-        if (analogRead(A0) >= 750) {
-          rotateMotor(0, 0);
-          rot = false;
-          delay(1000);
-          while (true)
-            delay(1000);
-        }
-        // break;
-      }
-    }
-    
-    
-    // rotateMotor(-220, 220);
-    // delay(5000);
-    rotateMotor(0, 0);
-    while (true) {
-      rotateMotor(-220, 220);
-      if (digitalRead(RIGHT_SENSOR)) {
-        break;
-      }
-    }
-    // rotateMotor(0, 0);
-    // delay(1000);
-  }
-  if (currentState == TURNING_LEFT) {
-    //Turn Left
-    rotateMotor(0, 0);
-    while (true) {
-      rotateMotor(220, -220);
-      if (analogRead(A0) >= 750) {
-        rotateMotor(0, 0);
-        break;
-      }
-    }
+  handleSensorValues();
+  
+  // setState();
+  // // Serial.println(currentState);
+  // // delay(6000);
+  // if (currentState == MOVING_FORWARD){
+  //   //Move forward
+  //   handleSensorValues();
+  // }
+  // if (currentState == TURNING_RIGHT) {
+  //   //Turn Right
+  //   rotateMotor(0, 0);
+  //   while(true)
+  //     delay(1000);
+  //   bool rot = true;
+  //   while (true) {
+  //     if (rot)
+  //       rotateMotor(-(220), 220);
+  //     if (analogRead(A0) >= 750) {
+  //       rot = false;
+  //       delay(100);
+  //       if (analogRead(A0) >= 750) {
+  //         rotateMotor(0, 0);
+  //       rot = false;
 
-    while (true)
-      delay(2000);
-    delay(5000);
-    rotateMotor(-220, -220);
-    delay(2000);
-    // rotateMotor(0, 0);
-    // delay(1000);
-  }
-  if (currentState == TURNING_180) {
-    //turn 180
-    rotateMotor(-(220), 220);
-    delay(10000);
-    rotateMotor(0, 0);
-    delay(1000);
-  }
-  if (currentState == STOP) {
-    //stop
-    rotateMotor(0, 0);
-    //pick stuff
-    delay(5000);
-    // while(true) {
-    //   rotateMotor(0, 0);
-    // }
-    currentState = TURNING_180;
-    rotateMotor(-(220), 220);
-    delay(10000);
-    rotateMotor(0, 0);
-    delay(1000);
-  }
+  //         delay(1000);
+  //         while (true)
+  //           delay(1000);
+  //       }
+  //       // break;
+  //     }
+  //   }
+    
+    
+  //   // rotateMotor(-220, 220);
+  //   // delay(5000);
+  //   rotateMotor(0, 0);
+  //   while (true) {
+  //     rotateMotor(-220, 220);
+  //     if (digitalRead(RIGHT_SENSOR)) {
+  //       break;
+  //     }
+  //   }
+  //   // rotateMotor(0, 0);
+  //   // delay(1000);
+  // }
+  // if (currentState == TURNING_LEFT) {
+  //   //Turn Left
+  //   rotateMotor(0, 0);
+  //   while (true) {
+  //     rotateMotor(220, -220);
+  //     if (analogRead(A0) >= 750) {
+  //       rotateMotor(0, 0);
+  //       break;
+  //     }
+  //   }
+
+  //   while (true)
+  //     delay(2000);
+  //   delay(5000);
+  //   rotateMotor(-220, -220);
+  //   delay(2000);
+  //   // rotateMotor(0, 0);
+  //   // delay(1000);
+  // }
+  // if (currentState == TURNING_180) {
+  //   //turn 180
+  //   rotateMotor(-(220), 220);
+  //   delay(10000);
+  //   rotateMotor(0, 0);
+  //   delay(1000);
+  // }
+  // if (currentState == STOP) {
+  //   //stop
+  //   rotateMotor(0, 0);
+  //   //pick stuff
+  //   delay(5000);
+  //   // while(true) {
+  //   //   rotateMotor(0, 0);
+  //   // }
+  //   currentState = TURNING_180;
+  //   rotateMotor(-(220), 220);
+  //   delay(10000);
+  //   rotateMotor(0, 0);
+  //   delay(1000);
+  // }
 }
 
 void MobilePlatform::setState() {
@@ -194,9 +202,9 @@ int MobilePlatform::handleFarTurnValues() {
 
 void MobilePlatform::handleSensorValues() {
   int sensorValues[] = {
-    digitalRead(LEFT_SENSOR),
-    digitalRead(MIDDLE_SENSOR),
-    digitalRead(RIGHT_SENSOR)
+    analogRead(LEFT_SENSOR) > 500,
+    analogRead(MIDDLE_SENSOR) > 700,
+    analogRead(RIGHT_SENSOR) > 500
   };
   if (!turning) {
     if (!sensorValues[0] && !sensorValues[1] && !sensorValues[2])//0 0 0
@@ -207,7 +215,7 @@ void MobilePlatform::handleSensorValues() {
     else if (!sensorValues[0] && !sensorValues[1] && sensorValues[2])//0 0 1
     {
       // Serial.println("Correction: turn right");
-      rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+      rotateMotor(MOTOR_SPEED + 30, -MOTOR_SPEED - 30);
 
     }
     else if (!sensorValues[0] && sensorValues[1] && !sensorValues[2])//0 1 0
@@ -218,12 +226,12 @@ void MobilePlatform::handleSensorValues() {
     else if (!sensorValues[0] && sensorValues[1] && sensorValues[2])//0 1 1
     {
       // Serial.println("90 deg right Turn");
-      rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+      rotateMotor(MOTOR_SPEED + 30, -MOTOR_SPEED - 30);
     }
     else if (sensorValues[0] && !sensorValues[1] && !sensorValues[2])//1 0 0
     {
       // Serial.println("Correction: turn left");
-      rotateMotor(-MOTOR_SPEED, MOTOR_SPEED);
+      rotateMotor(-MOTOR_SPEED - 30, MOTOR_SPEED + 30);
 
     }
     else if (sensorValues[0] && !sensorValues[1] && sensorValues[2])//1 0 1
@@ -234,7 +242,7 @@ void MobilePlatform::handleSensorValues() {
     else if (sensorValues[0] && sensorValues[1] && !sensorValues[2])//1 1 0
     {
       // Serial.println("90 deg left Turn");
-      rotateMotor(-MOTOR_SPEED, MOTOR_SPEED);
+      rotateMotor(-MOTOR_SPEED - 30, MOTOR_SPEED + 30);
       // delay(3000);
     }
     else if (sensorValues[0] && sensorValues[1] && sensorValues[2])//1 1 1
