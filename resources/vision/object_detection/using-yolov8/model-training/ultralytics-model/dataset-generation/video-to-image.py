@@ -31,7 +31,7 @@ while True:
         # At 30 fps, get 10 frames every second by only storing frames divisible by 3
         if count % 3 == 0:
             cv2.imwrite(
-                f'./images/image_{frame_count}_{random.randrange(200)}.jpg', frame)
+                f'./images/engine/tile/image_{frame_count}_{random.randrange(200)}.jpg', frame)
             print(f"t :> {time_string} | {count} | {frame_count}")
             frame_count += 1
 
