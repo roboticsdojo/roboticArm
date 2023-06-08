@@ -41,15 +41,32 @@ long oldPositionLeft  = -999;
 double distanceRight = 0;
 double distanceLeft = 0;
 
+unsigned long currentTime = 0;
+unsigned long previousTime = 0;
+
+unsigned long previousTimeRight = 0;
+unsigned long currentTimeRight = 0;
+
+unsigned long previousTimeLeft = 0;
+unsigned long currentTimeLeft = 0;
+
 
 // Function Prototypes
 void getDistanceRight();
 void getDistanceLeft();
 void stop();
+void turn_right();
+void turnRight(bool intercecrions);
 
 void setup() {
   platform.setup();
   Serial.begin(9600);
+
+  // while (true)
+  // {
+  //   Serial.println(analogRead(RIGHT_SENSOR));
+  // }
+  
   
   delay(5000);
 }
@@ -61,11 +78,6 @@ void loop() {
     analogRead(LEFT_SENSOR),
     analogRead(MIDDLE_SENSOR),
     analogRead(RIGHT_SENSOR)
-    };
-
-    int farValues[] = {
-      analogRead(FAR_LEFT),
-      analogRead(FAR_RIGHT)
     };
 
     double position = sensorValues[0] - sensorValues[2];
@@ -85,16 +97,22 @@ void loop() {
     if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700)
       break;
   }
-
-  if (count == 0) {
-    count ++;
-    rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-    delay(4000);
-
-    // while (true)
-    //   stop();
-  }
   
+  previousTime = currentTime;
+  currentTime = millis();
+  if (currentTime - previousTime > 2000)
+    count ++;
+  Serial.println("count: " + String(count));
+
+  if (count == 1) {
+      turn_right();
+  }
+
+  if (count == 3) {
+      turnRight(true);
+  }
+
+ 
 
   // if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700) {
   //   stop();
@@ -122,6 +140,65 @@ void loop() {
   // delay(10000);
 }
 
+void turn_right() {
+  // rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+  // delay(4000);
+  while(true) {
+    rotateMotor(MOTOR_SPEED, -MOTOR_SPEED-80);
+    if (analogRead(FAR_LEFT) > 700) {
+      break;
+    }
+  }
+  while(analogRead((RIGHT_SENSOR)) < 700) {
+    rotateMotor(MOTOR_SPEED+20, MOTOR_SPEED+20);
+  }
+
+  // while(analogRead(RIGHT_SENSOR) > 700) {
+  //   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+  // }
+  rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+  delay(4000);
+
+  // for (int i = 0; i < 100; i++) {
+  //   stop();
+  //   delay(10);
+  // }
+  // while(true) {
+  //   Serial.println(analogRead(RIGHT_SENSOR));
+  //   stop();
+  // }
+}
+
+
+void turnRight(bool intercecrion) {
+  while(analogRead(FAR_LEFT) > 700) {
+    rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+  }
+  while(true) {
+    rotateMotor(MOTOR_SPEED, -MOTOR_SPEED-80);
+    if (analogRead(FAR_LEFT) > 700) {
+      break;
+    }
+  }
+  while(analogRead((RIGHT_SENSOR)) < 700) {
+    rotateMotor(MOTOR_SPEED+20, MOTOR_SPEED+20);
+  }
+
+  // while(analogRead(RIGHT_SENSOR) > 700) {
+  //   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+  // }
+  rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+  delay(4000);
+
+  // for (int i = 0; i < 100; i++) {
+  //   stop();
+  //   delay(10);
+  // }
+  // while(true) {
+  //   Serial.println(analogRead(RIGHT_SENSOR));
+  //   stop();
+  // }
+}
 void stop() {
   setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, 0);
   setMotorState(LEFT_MOTOR_PIN1, LEFT_MOTOR_PIN2, 0);
