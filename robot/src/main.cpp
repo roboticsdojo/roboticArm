@@ -70,88 +70,29 @@ void loop() {
 
   double steering = P + I + D;
 
-
+  
   rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
   previous_error = position;
 
-//   if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700) {
-//     rotateMotor(0, 0);
-//     int target_left = 0;
-//     int target_right = 0;
-    
-//     while (true)
-//     {
-//       getDistanceLeft();
-//       getDistanceRight();
-//       double d_left = -(distanceLeft * 1000);
-//       double d_right = distanceRight * 1000;
-//       Serial.print("D_Left: " + String(d_left));
-//       Serial.println(" D_Right: " + String(d_right));
-//       target_left = d_left + 308;
-//       target_right = d_right - 133;
-//       Serial.print("Target Left: " + String(target_left));
-//       Serial.println(" d_left: " + String(d_left));
-//       Serial.println();
+  // if (analogRead(FAR_RIGHT) > 700 || analogRead(FAR_LEFT) > 700) {
+  //   rotateMotor(0, 0);
+  //   while (true) {
+  //     delay(1000);
+  //   }
+  // }
 
-//       // while (abs(d_left - d_right) > 10) {
-//       //   getDistanceLeft();
-//       //   getDistanceRight();
-//       //   d_left = -(distanceLeft * 1000);
-//       //   d_right = distanceRight * 1000;
+  
 
-        
-//       //   Serial.print("D_Left: " + String(d_left));
-//       //   Serial.println(" D_Right: " + String(d_right));
-//       //   delay(2000);
-//       // }
 
-//       rotateMotor(0, 0);
-
-//       // while (true)
-//       // {
-//       //   delay(1000);
-//       // }
-      
-//       distanceLeft = 0;
-//       distanceRight = 0;
-//       getDistanceLeft();
-//       getDistanceRight();
-//       d_left = -(distanceLeft * 1000);
-//       d_right = distanceRight * 1000;
-//       target_left = d_left + 100;
-//       // while (d_left < target_left)
-//       // {
-//       //   getDistanceLeft();
-//       //   d_left = -(distanceLeft * 1000);
-//       //   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-//       //   Serial.print("D_Left: " + String(d_left));
-//       // }
-//       if (counter == 0) {
-//         rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-//         delay(4000);
-//         rotateMotor(0, 0);  
-//         counter ++;
-//       }
-      
-//       rotateMotor(0, 0);
-//       // while(true)
-//       //   delayMicroseconds(1000);
-//       break;
-//     }
-//   }
-//   getDistanceLeft();
-//   getDistanceRight();
-
-//   // Serial.println("Left: " +String(analogRead(LEFT_SENSOR)));
-//   // Serial.println("Middle: " +String(analogRead(MIDDLE_SENSOR)));
-//   // Serial.println("Right: " +String(analogRead(RIGHT_SENSOR)));
-//   // // Serial.print("Far Left: " + String(analogRead(FAR_LEFT)));
-//   // // Serial.println("  Far Right: " + String(analogRead(FAR_RIGHT)));
-//   // // Serial.print("D_Left: " + String(distanceLeft));
+  // Serial.println("Left: " +String(analogRead(LEFT_SENSOR)));
+  // Serial.println("Middle: " +String(analogRead(MIDDLE_SENSOR)));
+  // Serial.println("Right: " +String(analogRead(RIGHT_SENSOR)));
+  
+  // // Serial.print("D_Left: " + String(distanceLeft));
 //   // // Serial.println(" D_Right: " + String(distanceRight));
 //   // // // Serial.println("**********************");
 
-//   // delay(10000);
+  // delay(10000);
 }
 
 
@@ -160,10 +101,10 @@ void rotateMotor(int rightMotorSpeed, int leftMotorSpeed) {
   if (rightMotorSpeed < -255) rightMotorSpeed = -255;
   if (leftMotorSpeed > 255) leftMotorSpeed = 255;
   if (leftMotorSpeed < -255) leftMotorSpeed = -255;
-  if (rightMotorSpeed > -200 && rightMotorSpeed < 0) rightMotorSpeed = -200;
-  if (rightMotorSpeed < 200 && rightMotorSpeed > 0) rightMotorSpeed = 200;
-  if (leftMotorSpeed > -200 && leftMotorSpeed < 0) leftMotorSpeed = -200;
-  if (leftMotorSpeed < 200 && leftMotorSpeed > 0) leftMotorSpeed = 200;
+  if (rightMotorSpeed > -200 && rightMotorSpeed <= 0) rightMotorSpeed = -220;
+  if (rightMotorSpeed < 200 && rightMotorSpeed >= 0) rightMotorSpeed = 220;
+  if (leftMotorSpeed > -200 && leftMotorSpeed <= 0) leftMotorSpeed = -220;
+  if (leftMotorSpeed < 200 && leftMotorSpeed >= 0) leftMotorSpeed = 220;
   
   setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, rightMotorSpeed);
   setMotorState(LEFT_MOTOR_PIN1, LEFT_MOTOR_PIN2, leftMotorSpeed);
