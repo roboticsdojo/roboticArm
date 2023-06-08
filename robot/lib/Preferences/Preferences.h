@@ -14,6 +14,8 @@
 #define LEFT_MOTOR_PIN2 9
 #define RIGHT_MOTOR_PIN1 10
 #define RIGHT_MOTOR_PIN2 11
-#define TRIGPIN 3
-#define ECHOPIN 4
+#define TRIGPIN 4
+#define ECHOPIN 7
+
+#define CORRECTION 100
 #endif // PREFERENCES_H

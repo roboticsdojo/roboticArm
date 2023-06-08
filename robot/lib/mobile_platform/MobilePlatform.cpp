@@ -202,10 +202,14 @@ int MobilePlatform::handleFarTurnValues() {
 
 void MobilePlatform::handleSensorValues() {
   int sensorValues[] = {
-    analogRead(LEFT_SENSOR) > 500,
-    analogRead(MIDDLE_SENSOR) > 700,
-    analogRead(RIGHT_SENSOR) > 500
+    analogRead(LEFT_SENSOR) > 600,
+    analogRead(MIDDLE_SENSOR) > 800,
+    analogRead(RIGHT_SENSOR) > 600
   };
+
+  int error = abs(analogRead(LEFT_SENSOR) - analogRead(RIGHT_SENSOR));
+
+
   if (!turning) {
     if (!sensorValues[0] && !sensorValues[1] && !sensorValues[2])//0 0 0
     {
@@ -215,7 +219,7 @@ void MobilePlatform::handleSensorValues() {
     else if (!sensorValues[0] && !sensorValues[1] && sensorValues[2])//0 0 1
     {
       // Serial.println("Correction: turn right");
-      rotateMotor(MOTOR_SPEED + 30, -MOTOR_SPEED - 30);
+      rotateMotor(MOTOR_SPEED, MOTOR_SPEED + CORRECTION);
 
     }
     else if (!sensorValues[0] && sensorValues[1] && !sensorValues[2])//0 1 0
@@ -226,12 +230,12 @@ void MobilePlatform::handleSensorValues() {
     else if (!sensorValues[0] && sensorValues[1] && sensorValues[2])//0 1 1
     {
       // Serial.println("90 deg right Turn");
-      rotateMotor(MOTOR_SPEED + 30, -MOTOR_SPEED - 30);
+      rotateMotor(MOTOR_SPEED, MOTOR_SPEED + CORRECTION);
     }
     else if (sensorValues[0] && !sensorValues[1] && !sensorValues[2])//1 0 0
     {
       // Serial.println("Correction: turn left");
-      rotateMotor(-MOTOR_SPEED - 30, MOTOR_SPEED + 30);
+      rotateMotor(MOTOR_SPEED + CORRECTION, MOTOR_SPEED);
 
     }
     else if (sensorValues[0] && !sensorValues[1] && sensorValues[2])//1 0 1
@@ -242,7 +246,7 @@ void MobilePlatform::handleSensorValues() {
     else if (sensorValues[0] && sensorValues[1] && !sensorValues[2])//1 1 0
     {
       // Serial.println("90 deg left Turn");
-      rotateMotor(-MOTOR_SPEED - 30, MOTOR_SPEED + 30);
+      rotateMotor(MOTOR_SPEED+CORRECTION, MOTOR_SPEED);
       // delay(3000);
     }
     else if (sensorValues[0] && sensorValues[1] && sensorValues[2])//1 1 1

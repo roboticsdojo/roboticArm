@@ -1,88 +1,170 @@
 #include <Arduino.h>
-#include "Preferences.h"
+
 #include "MobilePlatform.h"
-#include "motor_encoder.h"
+#include "Preferences.h"
+
+double Kp = 1.0; // Proportional gain
+double Ki = 0.0; // Integral gain
+double Kd = 5.0; // Derivative gain
+
+double previous_error = 0.0;
+double integral = 0.0;
 
 MobilePlatform platform;
+
+// prototype
 void rotateMotor(int rightMotorSpeed, int leftMotorSpeed);
 void setMotorState(int motorPin1, int motorPin2, int motorSpeed);
 
-#include <motor_encoder.h>
+//Encoder stuff
+#include <Encoder.h>
 
-// Define pins connected the encoders A & B
-#define RIGHT_ENCA 18 // Yellow
-#define RIGHT_ENCB 19 // Green
-#define LEFT_ENCA 2   // Yellow
-#define LEFT_ENCB 3   // Green
+// Encoder Pins
+#define RIGHT_ENCODER_A_PIN 18
+#define RIGHT_ENCODER_B_PIN 19
+#define LEFT_ENCODER_A_PIN 2
+#define LEFT_ENCODER_B_PIN 3
 
-// Motor Encoder Pulses per Rotation
-#define ENCODERPPR 66
+int counter = 0;
+
+// Motor Parameters
+#define PPR 360.0              // Pulses per revolution for the encoder
+#define wheelDiameter 0.1      // Diameter of the wheel in meters (adjust this to match your setup)
+#define wheelCircumference wheelDiameter * PI
+
+// Encoder
+Encoder rightEnc(RIGHT_ENCODER_A_PIN, RIGHT_ENCODER_B_PIN);
+Encoder leftEnc(LEFT_ENCODER_A_PIN, LEFT_ENCODER_B_PIN);
+long oldPositionRight  = -999;
+long oldPositionLeft  = -999;
+
+double distanceRight = 0;
+double distanceLeft = 0;
 
 
-// More motor variables
-int motorSpeed = 220;
-int leftEncoderPosition = 0;
-int rightEncoderPosition = 0;
-
-//-------- Distance-related variables ---------
-long left_current_millis = 0;
-long left_previous_millis = 0;
-long right_previous_millis = 0;
-long right_current_millis = 0;
-
-
-// PID-related variables
-long prevT = 0;
-float eprev = 0;
-float eintegral = 0;
-
-// Function prototypes
-void readLeftEncoder();
-void readRightEncoder();
+// Function Prototypes
+void getDistanceRight();
+void getDistanceLeft();
 
 void setup() {
   platform.setup();
   Serial.begin(9600);
-
-  attachInterrupt(digitalPinToInterrupt(LEFT_ENCA), readLeftEncoder, RISING);
-  attachInterrupt(digitalPinToInterrupt(RIGHT_ENCA), readRightEncoder, RISING);
   
-  delay(10000);
+  delay(5000);
 }
 void loop() {
   // platform.loop();
-  rotateMotor(MOTOR_SPEED, MOTOR_SPEED);
-  int leftDistance = getDistance(leftEncoderPosition, left_current_millis, left_previous_millis);
-  int rightDistance = getDistance(rightEncoderPosition, right_current_millis, right_previous_millis);
+  double sensorValues[] = {
+    analogRead(LEFT_SENSOR),
+    analogRead(MIDDLE_SENSOR),
+    analogRead(RIGHT_SENSOR)
+  };
 
-  Serial.print("Left: " + String(leftDistance));
-  Serial.println(" Right: " + String(rightDistance));
-  delay(5000);
+  double position = sensorValues[0] - sensorValues[2];
+  // Calculate the proportional term
+  double P = Kp * position;
+  integral += position;
+  double I = Ki * integral;
 
-  
-  // if (analogRead(FAR_RIGHT) > 700 || analogRead(FAR_LEFT) > 800) {
-  //   rotateMotor(0, 0);
-  //   delay(100);
-  //   if (analogRead(FAR_RIGHT) > 800 || analogRead(FAR_LEFT) > 700)
-  //   {
-  //     rotateMotor(0, 0);
-  //     while (true)
-  //       delay(1000);
-  //   }
-  // }
-// Serial.println("Left: " + String(analogRead(LEFT_SENSOR)));
-// Serial.println("Middle: " + String(analogRead(MIDDLE_SENSOR)));
-// Serial.println("Right: " + String(analogRead(RIGHT_SENSOR)));
-// // Serial.println("Far Left: " + String(analogRead(FAR_LEFT)));
-// // Serial.println("Far Right: " + String(analogRead(FAR_RIGHT)));
-// // Serial.println(analogRead(FAR_RIGHT) > 700 || analogRead(FAR_LEFT) > 700);
-// Serial.println("***************");
+  double D = Kd * (position - previous_error);
 
-// delay(10000);
+  double steering = P + I + D;
+
+
+  rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
+  previous_error = position;
+
+//   if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700) {
+//     rotateMotor(0, 0);
+//     int target_left = 0;
+//     int target_right = 0;
+    
+//     while (true)
+//     {
+//       getDistanceLeft();
+//       getDistanceRight();
+//       double d_left = -(distanceLeft * 1000);
+//       double d_right = distanceRight * 1000;
+//       Serial.print("D_Left: " + String(d_left));
+//       Serial.println(" D_Right: " + String(d_right));
+//       target_left = d_left + 308;
+//       target_right = d_right - 133;
+//       Serial.print("Target Left: " + String(target_left));
+//       Serial.println(" d_left: " + String(d_left));
+//       Serial.println();
+
+//       // while (abs(d_left - d_right) > 10) {
+//       //   getDistanceLeft();
+//       //   getDistanceRight();
+//       //   d_left = -(distanceLeft * 1000);
+//       //   d_right = distanceRight * 1000;
+
+        
+//       //   Serial.print("D_Left: " + String(d_left));
+//       //   Serial.println(" D_Right: " + String(d_right));
+//       //   delay(2000);
+//       // }
+
+//       rotateMotor(0, 0);
+
+//       // while (true)
+//       // {
+//       //   delay(1000);
+//       // }
+      
+//       distanceLeft = 0;
+//       distanceRight = 0;
+//       getDistanceLeft();
+//       getDistanceRight();
+//       d_left = -(distanceLeft * 1000);
+//       d_right = distanceRight * 1000;
+//       target_left = d_left + 100;
+//       // while (d_left < target_left)
+//       // {
+//       //   getDistanceLeft();
+//       //   d_left = -(distanceLeft * 1000);
+//       //   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+//       //   Serial.print("D_Left: " + String(d_left));
+//       // }
+//       if (counter == 0) {
+//         rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+//         delay(4000);
+//         rotateMotor(0, 0);  
+//         counter ++;
+//       }
+      
+//       rotateMotor(0, 0);
+//       // while(true)
+//       //   delayMicroseconds(1000);
+//       break;
+//     }
+//   }
+//   getDistanceLeft();
+//   getDistanceRight();
+
+//   // Serial.println("Left: " +String(analogRead(LEFT_SENSOR)));
+//   // Serial.println("Middle: " +String(analogRead(MIDDLE_SENSOR)));
+//   // Serial.println("Right: " +String(analogRead(RIGHT_SENSOR)));
+//   // // Serial.print("Far Left: " + String(analogRead(FAR_LEFT)));
+//   // // Serial.println("  Far Right: " + String(analogRead(FAR_RIGHT)));
+//   // // Serial.print("D_Left: " + String(distanceLeft));
+//   // // Serial.println(" D_Right: " + String(distanceRight));
+//   // // // Serial.println("**********************");
+
+//   // delay(10000);
 }
 
 
 void rotateMotor(int rightMotorSpeed, int leftMotorSpeed) {
+  if (rightMotorSpeed > 255) rightMotorSpeed = 255;
+  if (rightMotorSpeed < -255) rightMotorSpeed = -255;
+  if (leftMotorSpeed > 255) leftMotorSpeed = 255;
+  if (leftMotorSpeed < -255) leftMotorSpeed = -255;
+  if (rightMotorSpeed > -200 && rightMotorSpeed < 0) rightMotorSpeed = -200;
+  if (rightMotorSpeed < 200 && rightMotorSpeed > 0) rightMotorSpeed = 200;
+  if (leftMotorSpeed > -200 && leftMotorSpeed < 0) leftMotorSpeed = -200;
+  if (leftMotorSpeed < 200 && leftMotorSpeed > 0) leftMotorSpeed = 200;
+  
   setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, rightMotorSpeed);
   setMotorState(LEFT_MOTOR_PIN1, LEFT_MOTOR_PIN2, leftMotorSpeed);
   
@@ -103,33 +185,32 @@ void setMotorState(int motorPin1, int motorPin2, int motorSpeed) {
   }
 }
 
-
-
-void readLeftEncoder()
-{
-  int b = digitalRead(LEFT_ENCB);
-
-  //? WARNING: left motor is inverted (mirror image of right motor)
-  if (b > 0)
-  {
-    leftEncoderPosition--;
-  }
-  else
-  {
-    leftEncoderPosition++;
+void getDistanceRight() {
+  long newPosition = rightEnc.read();
+  
+  if (newPosition != oldPositionRight) {
+    oldPositionRight = newPosition;
+    
+    double wheelRotations = newPosition / PPR;
+    double distanceTravelled = wheelRotations * wheelCircumference;
+    
+    // Serial.print("Distance Travelled Right (m): ");
+    // Serial.println(distanceTravelled, 3);
+    distanceRight = distanceTravelled;
   }
 }
 
-void readRightEncoder()
-{
-  int b = digitalRead(RIGHT_ENCB);
-
-  if (b > 0)
-  {
-    rightEncoderPosition++;
-  }
-  else
-  {
-    rightEncoderPosition--;
+void getDistanceLeft() {
+  long newPosition = leftEnc.read();
+  
+  if (newPosition != oldPositionLeft) {
+    oldPositionLeft = newPosition;
+    
+    double wheelRotations = newPosition / PPR;
+    double distanceTravelled = wheelRotations * wheelCircumference;
+    
+    // Serial.print("Distance Travelled Left (m): ");
+    // Serial.println(distanceTravelled, 3);
+    distanceLeft = distanceTravelled;
   }
 }
