@@ -45,6 +45,7 @@ double distanceLeft = 0;
 // Function Prototypes
 void getDistanceRight();
 void getDistanceLeft();
+void stop();
 
 void setup() {
   platform.setup();
@@ -52,32 +53,56 @@ void setup() {
   
   delay(5000);
 }
+int count = 0;
 void loop() {
   // platform.loop();
-  double sensorValues[] = {
+  while(true) {
+    int sensorValues[] = {
     analogRead(LEFT_SENSOR),
     analogRead(MIDDLE_SENSOR),
     analogRead(RIGHT_SENSOR)
-  };
+    };
 
-  double position = sensorValues[0] - sensorValues[2];
-  // Calculate the proportional term
-  double P = Kp * position;
-  integral += position;
-  double I = Ki * integral;
+    int farValues[] = {
+      analogRead(FAR_LEFT),
+      analogRead(FAR_RIGHT)
+    };
 
-  double D = Kd * (position - previous_error);
+    double position = sensorValues[0] - sensorValues[2];
+    // Calculate the proportional term
+    double P = Kp * position;
+    integral += position;
+    double I = Ki * integral;
 
-  double steering = P + I + D;
+    double D = Kd * (position - previous_error);
 
+    double steering = P + I + D;
+
+    
+    rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
+    previous_error = position;
+    
+    if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700)
+      break;
+  }
+
+  if (count == 0) {
+    count ++;
+    rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+    delay(4000);
+
+    // while (true)
+    //   stop();
+  }
   
-  rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
-  previous_error = position;
 
-  // if (analogRead(FAR_RIGHT) > 700 || analogRead(FAR_LEFT) > 700) {
-  //   rotateMotor(0, 0);
+  // if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700) {
+  //   stop();
+  //   Serial.println("Here");
   //   while (true) {
   //     delay(1000);
+  //     Serial.print("Far Left: " + String(analogRead(FAR_LEFT)));
+  //     Serial.println("  Far Right: " + String(analogRead(FAR_RIGHT)));
   //   }
   // }
 
@@ -87,12 +112,22 @@ void loop() {
   // Serial.println("Left: " +String(analogRead(LEFT_SENSOR)));
   // Serial.println("Middle: " +String(analogRead(MIDDLE_SENSOR)));
   // Serial.println("Right: " +String(analogRead(RIGHT_SENSOR)));
+  // Serial.print("Far Left: " + String(analogRead(FAR_LEFT)));
+  // Serial.println("  Far Right: " + String(analogRead(FAR_RIGHT)));
   
   // // Serial.print("D_Left: " + String(distanceLeft));
 //   // // Serial.println(" D_Right: " + String(distanceRight));
 //   // // // Serial.println("**********************");
 
   // delay(10000);
+}
+
+void stop() {
+  setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, 0);
+  setMotorState(LEFT_MOTOR_PIN1, LEFT_MOTOR_PIN2, 0);
+
+  analogWrite(ENABLE_RIGHT_MOTOR, 0);
+  analogWrite(ENABLE_LEFT_MOTOR,0);
 }
 
 
