@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#include <NewPing.h>
+
 #include "MobilePlatform.h"
 #include "Preferences.h"
 
@@ -50,6 +52,9 @@ unsigned long currentTimeRight = 0;
 unsigned long previousTimeLeft = 0;
 unsigned long currentTimeLeft = 0;
 
+unsigned current_time_distance = 0;
+unsigned previous_time_distance = 0;
+
 
 // Function Prototypes
 void getDistanceRight();
@@ -57,22 +62,47 @@ void getDistanceLeft();
 void stop();
 void turn_right();
 void turnRight(bool intercecrions);
+void PIDLoop ();
+int getDistance();
+
+// Ultrasonic Sensor Stuff
+#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+
+NewPing sonar(TRIGPIN, ECHOPIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+
+unsigned int pingSpeed = 100; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
+unsigned long pingTimer;     // Holds the next ping time.
+volatile int distance = 400;
+int distance_counter = 0;
+
+// Prototypes
+void echoCheck();
+
+
 
 void setup() {
   platform.setup();
   Serial.begin(9600);
 
-  // while (true)
-  // {
-  //   Serial.println(analogRead(RIGHT_SENSOR));
-  // }
+  pingTimer = millis(); // Start now.
+  Serial.println("Starting...");
+// pinMode(TRIGPIN, OUTPUT);
+  // pinMode(ECHOPIN, INPUT);  
+  while (true) {
+    getDistanceLeft();
+    getDistanceLeft();
+    Serial.print("Left: " + String(distanceLeft));
+    Serial.println(" Right: " + String(distanceRight));
+  }
   
   
-  delay(5000);
+  delay(2000);
 }
 int count = 0;
+int i = 0;
 void loop() {
   // platform.loop();
+ 
   while(true) {
     int sensorValues[] = {
     analogRead(LEFT_SENSOR),
@@ -93,26 +123,93 @@ void loop() {
     
     rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
     previous_error = position;
+
+    // Serial.println(distance);
+    if (distance <= 30 ) {
+      distance_counter ++;
+      if (distance_counter < 5)
+        break;
+      while (true)
+        stop();
+    }
+
     
-    if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700)
+    if (analogRead(FAR_RIGHT) > 750)
       break;
-  }
+
+     if (millis() >= pingTimer) // pingSpeed milliseconds since last ping, do another ping.
+      break;
+
+    }
+    // if (getDistance() == 30){
+    //     stop();
+    //     delay(5000);
+    //   // spin 180deg
+    //     rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+    //     delay(20000);
+
+    //     // for (int i = 0; i < 10000; i++) {
+    //     //   PIDLoop();
+    //     // }
+    //     // while (true){
+    //     // // rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+    //     // stop();
+    //     // // delay(3000);
+    //     // }
+
+        
+    // }
+    // if ((FAR_LEFT) >600 && (FAR_RIGHT) > 600){
+    //   rotateMotor(MOTOR_SPEED, MOTOR_SPEED);
+    // }
+
+    
+    
+    // previous_time_distance = current_time_distance;
+    // current_time_distance = millis();
+
+    // if ((current_time_distance - previous_time_distance) > 5000 && i == 0) {
+    //   i++;
+    //   if (getDistance() <= 30 && getDistance() != 13){
+    //     while(true){
+    //       stop();
+    //     }
+    //   }
+    // }
+
+    // if ((current_time_distance - previous_time_distance) > 1000 && i > 0) {
+    //   i++;
+    //   if (getDistance() == 30){
+    //     while(true){
+    //       stop();
+    //     }
+    //   }
+    // }
+    
+  // }
   
-  previousTime = currentTime;
-  currentTime = millis();
-  if (currentTime - previousTime > 2000)
-    count ++;
-  Serial.println("count: " + String(count));
+  // previousTime = currentTime;
+  // currentTime = millis();
+  // if (currentTime - previousTime > 2000)
+  //   count ++;
 
-  if (count == 1) {
-      turn_right();
-  }
+  pingTimer += pingSpeed;      // Set the next ping time.
+  sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+  
+  
+  // Serial.println("count: " + String(count));
 
-  if (count == 3) {
-      turnRight(true);
-  }
-
- 
+  // if (count == 1) {
+  //     turn_right();
+  // }
+  // else if (count == 4) {
+  //     turnRight(true);
+  // }
+  // else {
+  //   PIDLoop();
+  //   delay(100);
+  // }
+  
 
   // if (analogRead(FAR_LEFT) > 700 || analogRead(FAR_RIGHT) > 700) {
   //   stop();
@@ -124,8 +221,6 @@ void loop() {
   //   }
   // }
 
-  
-
 
   // Serial.println("Left: " +String(analogRead(LEFT_SENSOR)));
   // Serial.println("Middle: " +String(analogRead(MIDDLE_SENSOR)));
@@ -134,30 +229,93 @@ void loop() {
   // Serial.println("  Far Right: " + String(analogRead(FAR_RIGHT)));
   
   // // Serial.print("D_Left: " + String(distanceLeft));
-//   // // Serial.println(" D_Right: " + String(distanceRight));
-//   // // // Serial.println("**********************");
+  // // Serial.println(" D_Right: " + String(distanceRight));
+  // // // Serial.println("**********************");
 
   // delay(10000);
+}
+
+void PIDLoop () {
+  int sensorValues[] = {
+    analogRead(LEFT_SENSOR),
+    analogRead(MIDDLE_SENSOR),
+    analogRead(RIGHT_SENSOR)
+    };
+
+    double position = sensorValues[0] - sensorValues[2];
+    // Calculate the proportional term
+    double P = Kp * position;
+    integral += position;
+    double I = Ki * integral;
+
+    double D = Kd * (position - previous_error);
+
+    double steering = P + I + D;
+
+    
+    rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
+    previous_error = position;
 }
 
 void turn_right() {
   // rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
   // delay(4000);
+
+  // while (analogRead(FAR_RIGHT) > 700) {
+  //   PIDLoop();
+  // }
+  
   while(true) {
-    rotateMotor(MOTOR_SPEED, -MOTOR_SPEED-80);
-    if (analogRead(FAR_LEFT) > 700) {
+    rotateMotor(MOTOR_SPEED, -(MOTOR_SPEED - 20));
+    if (analogRead(FAR_LEFT) > 720) {
+      // rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
       break;
     }
   }
-  while(analogRead((RIGHT_SENSOR)) < 700) {
-    rotateMotor(MOTOR_SPEED+20, MOTOR_SPEED+20);
-  }
+
+  while (analogRead(FAR_LEFT) > 600 || analogRead(FAR_RIGHT) > 600)
+    rotateMotor(MOTOR_SPEED, -(MOTOR_SPEED - 20));
+
+  // just stop
+  // while(true)
+  //   stop();
+
+  // while(analogRead((FAR_LEFT)) > 600) {
+  //   rotateMotor(MOTOR_SPEED+20, 200);
+  //   if (analogRead(FAR_LEFT) < 500)
+  //     break;
+  // }
+  // previousTimeRight = millis();
+
+  // for (int i= 0; i < 10; i++)
+  //   stop();
+
+  // while (millis() - previousTimeRight < 1000) {
+  //   // if (analogRead(FAR_LEFT) > 600 || analogRead(FAR_RIGHT) > 600)
+  //   //   break;
+  //   PIDLoop();
+  // }
+
+  // while (millis() - previousTimeRight < 4000) {
+  //   if (analogRead(FAR_LEFT) > 600 || analogRead(FAR_RIGHT) > 600)
+  //     break;
+  //   PIDLoop();
+  // }
+
+  // while (true) {
+  //   stop();
+  // }
 
   // while(analogRead(RIGHT_SENSOR) > 700) {
   //   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
   // }
-  rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-  delay(4000);
+  // rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
+  // delay(4000);
+
+  // while (true) {
+  //   stop();
+  //   delay(100);
+  // }
 
   // for (int i = 0; i < 100; i++) {
   //   stop();
@@ -206,7 +364,6 @@ void stop() {
   analogWrite(ENABLE_RIGHT_MOTOR, 0);
   analogWrite(ENABLE_LEFT_MOTOR,0);
 }
-
 
 void rotateMotor(int rightMotorSpeed, int leftMotorSpeed) {
   if (rightMotorSpeed > 255) rightMotorSpeed = 255;
@@ -266,4 +423,33 @@ void getDistanceLeft() {
     // Serial.println(distanceTravelled, 3);
     distanceLeft = distanceTravelled;
   }
+}
+
+int getDistance() {
+  // Clears the trigPin
+  digitalWrite(TRIGPIN, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(TRIGPIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIGPIN, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  int duration = pulseIn(ECHOPIN, HIGH);
+  // Calculating the distance
+  int distance = duration * 0.034 / 2;
+  
+  return distance;
+}
+
+
+void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
+  // Don't do anything here!
+  if (sonar.check_timer()) { // This is how you check to see if the ping was received.
+    // // Here's where you can add code.
+    // Serial.print("Ping: ");
+    // Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    // Serial.println("cm");
+    distance = sonar.ping_result / US_ROUNDTRIP_CM;
+  }
+  // Don't do anything here!
 }

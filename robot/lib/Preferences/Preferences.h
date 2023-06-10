@@ -8,14 +8,15 @@
 #define LEFT_SENSOR A4
 #define FAR_RIGHT A0
 #define FAR_LEFT A1
-#define ENABLE_LEFT_MOTOR 6
+#define ENABLE_LEFT_MOTOR 3 //6
 #define ENABLE_RIGHT_MOTOR 5
 #define LEFT_MOTOR_PIN1 8
 #define LEFT_MOTOR_PIN2 9
 #define RIGHT_MOTOR_PIN1 10
-#define RIGHT_MOTOR_PIN2 11
-#define TRIGPIN 4
-#define ECHOPIN 7
+#define RIGHT_MOTOR_PIN2 4
+
+#define TRIGPIN 14//12 //4
+#define ECHOPIN 15//11 //7
 
 #define CORRECTION 100
-#endif // PREFERENCES_H
+#endif //PREFERENCES_H
