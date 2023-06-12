@@ -54,7 +54,9 @@ void MobilePlatform::configurePWMFrequency() {
   // Change the frequency of PWM signal on pins D5 and D6 to 7812.5 Hz.
   // TCCR0B = TCCR0B & (B11111000 | B00000010);
   // Change the frequency of PWM signal on pins D2, D3, D5 to 7812.5 Hz.
-  TCCR3B = TCCR3B & (B11111000 | B00000010);
+  // TCCR3B = TCCR3B & (B11111000 | B00000010);
+  // Change the frequency of PWM signal on pins D44, D45, D46 to 7812.5 Hz.
+  TCCR4B = TCCR4B & (B11111000 | B00000010);
 }
 
 void MobilePlatform::loop() {
