@@ -1,18 +1,43 @@
 from roboflow import Roboflow
-
-rf = Roboflow(api_key="8kLxlVgusB4R1fsKc2DX")
-project = rf.workspace().project("roboken-object-detection")
-model = project.version(1).model
+import cv2
+import numpy as np
 
 
-# test-image
-test_image = 'test_image.jpg'
 
-# infer on a local image
-result = model.predict(test_image, confidence=40, overlap=30)
+# Initialize Inference Model
+# rf = Roboflow(api_key="8kLxlVgusB4R1fsKc2DX")
+# project = rf.workspace().project("roboken-object-detection")
+# model = project.version(1).model
 
-# print result
-print(result.json())
 
-# save result
-result.save("test_result.jpg")
+# Initialize Camera
+cap = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
+# Set Dimensions
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if ret:
+        cv2.imwrite('camera_snapshot.jpg', frame)
+        cv2.imshow("Raspberry Pi Camera V2", frame)
+        cv2.waitKey(0)
+        
+    print("Failed to Capture")
+    break
+
+cap.release()
+cv2.destroyAllWindows()
+
+
+# # test-image
+# test_image = 'test_image.jpg'
+
+# # infer on a local image
+# result = model.predict(test_image, confidence=40, overlap=30)
+
+# # print result
+# print(result.json())
+
+# # save result
+# result.save("test_result.jpg")
