@@ -1,12 +1,13 @@
 from roboflow import Roboflow
 import cv2
 import numpy as np
+import json
 
 
 # Initialize Inference Model
-# rf = Roboflow(api_key="8kLxlVgusB4R1fsKc2DX")
-# project = rf.workspace().project("roboken-object-detection")
-# model = project.version(1).model
+rf = Roboflow(api_key="8kLxlVgusB4R1fsKc2DX")
+project = rf.workspace().project("roboken-object-detection")
+model = project.version(1).model
 
 
 # Initialize Camera
@@ -47,7 +48,39 @@ def video_stream():
     cv2.destroyAllWindows()
 
 
-video_stream()
+def infer_from_video_stream():
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            print("Failed to Capture")
+            break
+
+        # Show video stream
+        cv2.imshow("Raspberry Pi Camera V2", frame)
+
+        # Infer on video stream (frame by frame)
+        result = model.predict(frame, confidence=40, overlap=30)
+
+        # print(result.json())
+        print(f"Prediction_Result: {result.json()['predictions']}")
+
+        #! Save result as image (visualize) [FAILED]
+        # if result.json()['predictions']:
+        #     result.save("video_inference_result.jpg")
+        #     print("Save result as image [SUCCESS]")
+
+        #! Save result to JSON file [FAILED]
+        # with open('result.json', 'a') as f:
+        #     json.dump(result.json(), f)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+infer_from_video_stream()
 
 # # test-image
 # test_image = 'test_image.jpg'
