@@ -102,9 +102,38 @@ def infer_from_video_stream():
     cv2.destroyAllWindows()
 
 
+def video_snap_infer():
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            print("Failed to Capture")
+            break
+
+        # cv2.imwrite('infer_from_snapshot.jpg', frame)
+        FPS = cap.get(cv2.CAP_PROP_FPS)
+        cv2.imshow(f"video_snap_infer: {FPS} FPS", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('l'):
+            # Infer on snapshot
+            print("Infer on snapshot")
+            result = model.predict(frame, confidence=40, overlap=30)
+            print(result.json())
+            result.save("video_snap_infer.jpg")
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+        # Print result
+        # print(result.json())
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
 # infer_from_video_stream()
-infer_from_snapshot()
+# infer_from_snapshot()
 # video_stream()
+video_snap_infer()
 
 # # test-image
 # test_image = 'test_image.jpg'
