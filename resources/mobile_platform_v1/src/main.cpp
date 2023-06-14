@@ -109,6 +109,14 @@ void setup() {
   delay(20);
 
   state = PICK_TRAILER;
+
+  // Test the sensors
+  // while (true) {
+  //   Serial.print("LEFT_SENSOR: ");
+  //   Serial.print(analogRead(LEFT_SENSOR));
+  //   Serial.print("\t||\tRIGHT_SENSOR: ");
+  //   Serial.println(analogRead(RIGHT_SENSOR));
+  // }
 }
 void loop() {
   setGyroReadings();
@@ -125,8 +133,15 @@ void loop() {
       customDelay(200);
       targetAngle = -(150);
       moveDistance(850);
+
       // Move and detect line
-      moveDistance(500, true); // Set to true to move and detect line
+      targetAngle = -130;
+      moveDistance(400, true); // Set to true to move and detect line
+      moveDistance(40);
+      rotateToAngle(-80, 10);
+      targetAngle = -80;
+      moveDistance(1000, true);
+      
       // Follow the  line
       // Stop when distance <= 50
       // Wait to pick wheels
@@ -244,6 +259,10 @@ void moveDistance(double distance_mm, bool detectLine = false) {
     // Update the current distances
     setDistanceLeft();
     setDistanceRight();
+    Serial.print("Distance Left: ");
+    Serial.print(distanceLeft);
+    Serial.print("\t||\tDistance Right: ");
+    Serial.println(distanceRight);
 
     // Get the PID controller output
     double pidOutput = PIDController(targetAngle);
@@ -260,7 +279,7 @@ void moveDistance(double distance_mm, bool detectLine = false) {
       break;
     }
 
-    if (detectLine && (analogRead(LEFT_SENSOR) > 500 || analogRead(RIGHT_SENSOR) > 500)) {
+    if (detectLine && (analogRead(LEFT_SENSOR) > 600 || analogRead(RIGHT_SENSOR) > 600)) {
       break;
     }
   }
