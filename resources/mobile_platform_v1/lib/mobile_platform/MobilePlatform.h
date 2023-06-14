@@ -3,38 +3,31 @@
 
 #include <Arduino.h>
 #include "Preferences.h"
+#include "Gyro.h"
 
 class MobilePlatform {
   private:
-    bool turning = false;
-    bool stop = false;
-
     enum State {
-      MOVING_FORWARD,
-      TURNING_RIGHT,
-      TURNING_LEFT,
-      STOP,
-      TURNING_180
+      PICK_TRAILER,
+      PICK_ENGINE,
+      PICK_WHEELS,
+      BACK_TO_CHASIS,
+      PICK_CABIN,
+      STOP
     };
 
-    State currentState = State();
+    State currentState;
     void rotateMotor(int rightMotorSpeed, int leftMotorSpeed);
     void setMotorState(int motorPin1, int motorPin2, int motorSpeed);
-    int handleFarTurnValues();
-    void handleSensorValues();
     void configurePins();
     void configurePWMFrequency();
-    void setState();
 
-    //Right: 1, left: -1, ignore 0
-    int turns[50] = {1, -1, -1, -1, -1, -1, -1};
-    int counter = 0;
 
   public:
     MobilePlatform();
+    Gyro gyro;
     void setup();
     void loop();
-    int getDistance();
 };
 
 #endif

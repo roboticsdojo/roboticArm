@@ -137,7 +137,6 @@ void setup() {
   Serial.begin(9600);
 
   pingTimer = millis(); // Start now.
-  Serial.println("Starting...");
 
   //gyro
   Wire.begin();                      // Initialize comunication
@@ -151,58 +150,15 @@ void setup() {
 
   currentTime = micros();
 
-  // while (true) {
-  //   setGyroReadings();
-  //   forwardGyroPIDLoop();
-  //   setDistanceLeft();
-  //   setDistanceRight();
-  //   if (distanceRight > 1500-35 && distanceLeft > 1500-35) {
-  //     while (true)
-  //       stop();
-  //   }
-  // }
-
-  
-// pinMode(TRIGPIN, OUTPUT);
-  // pinMode(ECHOPIN, INPUT);
-  // for (int i = 0; i < 5000; i++)
-  //   PIDLoop();
-  // while(true)
-  //   stop();
-  // while (true)
-  //   PIDLoop();
-  
-
-  // static int gyro_counter = 0;
-  // while (true) {
-  //   Serial.print("Left_Sensor: " + String(analogRead(LEFT_SENSOR)));
-  //   Serial.println("\tRight_Sensor: " + String(analogRead(RIGHT_SENSOR)));
-  //   // PIDLoop();
-  // }
   /**Step 1: Pick chasis**/ 
   while (true) {
-    // gyro_counter++;
-    // if (gyro_counter >= 2) {
-    //   gyro_counter = 0;
-    //   forwardGyroPIDLoop();
-    // }
     setDistanceLeft();
     setDistanceRight();
     setGyroReadings();
-    forwardGyroPIDLoop();
-    // Serial.print("Distance_L : ");
-    // Serial.print(distanceLeft);
-    // Serial.print(" mm");
-    // Serial.print(" Distance_R: ");
-    // Serial.print(distanceRight);
-    // Serial.println(" mm");
     if (distanceLeft >= (1300) || distanceRight >= (1300)) {
-      // rotateMotor(-MOTOR_SPEED, -MOTOR_SPEED+50);
-      // delay(1000);
-      
       break;
     }
-    // moveEncPIDLoop();
+    forwardGyroPIDLoop();
   }
   targetAngle = 30; //90 -> about turn
   while (true) {
@@ -297,9 +253,6 @@ void loop() {
       if (distance_counter < 5)
         break;
       targetAngle = 0;
-      // KpGyro = 1000;
-      // KiGyro = 0.05;
-      // KdGyro = 0.5;
       PREVIOUS_TIME = millis();
       while (true) {
         // stop();
@@ -340,10 +293,6 @@ void loop() {
       }
     }
 
-    
-    // if (analogRead(FAR_RIGHT) > 750)
-    //   break;
-
      if (millis() >= pingTimer) // pingSpeed milliseconds since last ping, do another ping.
       break;
 
@@ -359,6 +308,7 @@ void setGyroReadings () {
     // Calculating Roll and Pitch from the accelerometer data
     accAngleX = (atan(AccY / sqrt(pow(AccX, 2) + pow(AccZ, 2))) * 180 / PI) - AccErrorX; //AccErrorX is calculated in the calculateError() function
     accAngleY = (atan(-1 * AccX / sqrt(pow(AccY, 2) + pow(AccZ, 2))) * 180 / PI) - AccErrorY;
+    
     
     // === Read gyroscope (on the MPU6050) data === //
     previousTime = currentTime;
@@ -394,30 +344,6 @@ void forwardGyroPIDLoop() {
             
     rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
     previous_error_gyro = angleError;
-    // static int count;
-    // static int countStraight;
-
-    // if (count < 2) {
-    //   count ++;
-    // } else {
-    //   count = 0;
-    //   if (abs(targetAngle - angle) < 3){
-    //       if (countStraight < 10){
-    //         countStraight ++;
-    //       } else {
-    //         countStraight = 0;
-    //         //PID
-            
-    //       }
-    //     } else {
-    //       countStraight = 0;
-    //     }
-    // }
-
-
-    // Serial.print("roll = "); Serial.print(roll);
-    // Serial.print("\t||\tpitch = "); Serial.print(pitch);
-    // Serial.print("\t||\tangle = "); Serial.println(angle);
 }
 
 void PIDLoop () {
@@ -443,13 +369,6 @@ void PIDLoop () {
 }
 
 void turn_right() {
-  // rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-  // delay(4000);
-
-  // while (analogRead(FAR_RIGHT) > 700) {
-  //   PIDLoop();
-  // }
-  
   while(true) {
     rotateMotor(MOTOR_SPEED, -(MOTOR_SPEED - 20));
     if (analogRead(FAR_LEFT) > 720) {
@@ -460,56 +379,6 @@ void turn_right() {
 
   while (analogRead(FAR_LEFT) > 600 || analogRead(FAR_RIGHT) > 600)
     rotateMotor(MOTOR_SPEED, -(MOTOR_SPEED - 20));
-
-  // just stop
-  // while(true)
-  //   stop();
-
-  // while(analogRead((FAR_LEFT)) > 600) {
-  //   rotateMotor(MOTOR_SPEED+20, 200);
-  //   if (analogRead(FAR_LEFT) < 500)
-  //     break;
-  // }
-  // previousTimeRight = millis();
-
-  // for (int i= 0; i < 10; i++)
-  //   stop();
-
-  // while (millis() - previousTimeRight < 1000) {
-  //   // if (analogRead(FAR_LEFT) > 600 || analogRead(FAR_RIGHT) > 600)
-  //   //   break;
-  //   PIDLoop();
-  // }
-
-  // while (millis() - previousTimeRight < 4000) {
-  //   if (analogRead(FAR_LEFT) > 600 || analogRead(FAR_RIGHT) > 600)
-  //     break;
-  //   PIDLoop();
-  // }
-
-  // while (true) {
-  //   stop();
-  // }
-
-  // while(analogRead(RIGHT_SENSOR) > 700) {
-  //   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-  // }
-  // rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-  // delay(4000);
-
-  // while (true) {
-  //   stop();
-  //   delay(100);
-  // }
-
-  // for (int i = 0; i < 100; i++) {
-  //   stop();
-  //   delay(10);
-  // }
-  // while(true) {
-  //   Serial.println(analogRead(RIGHT_SENSOR));
-  //   stop();
-  // }
 }
 
 
@@ -526,21 +395,8 @@ void turnRight(bool intercecrion) {
   while(analogRead((RIGHT_SENSOR)) < 700) {
     rotateMotor(MOTOR_SPEED+20, MOTOR_SPEED+20);
   }
-
-  // while(analogRead(RIGHT_SENSOR) > 700) {
-  //   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
-  // }
   rotateMotor(MOTOR_SPEED, -MOTOR_SPEED);
   delay(4000);
-
-  // for (int i = 0; i < 100; i++) {
-  //   stop();
-  //   delay(10);
-  // }
-  // while(true) {
-  //   Serial.println(analogRead(RIGHT_SENSOR));
-  //   stop();
-  // }
 }
 void stop() {
   setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, 0);
@@ -610,22 +466,6 @@ void setDistanceLeft() {
   }
 }
 
-int getDistance() {
-  // Clears the trigPin
-  digitalWrite(TRIGPIN, LOW);
-  delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(TRIGPIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIGPIN, LOW);
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  int duration = pulseIn(ECHOPIN, HIGH);
-  // Calculating the distance
-  int distance = duration * 0.034 / 2;
-  
-  return distance;
-}
-
 
 void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
   // Don't do anything here!
@@ -653,236 +493,8 @@ void moveEncPIDLoop() {
     
     rotateMotor(MOTOR_SPEED + steering, MOTOR_SPEED - steering);
     previous_error_s = error_s;
-    // delay(10);
 }
 
-// int16_t getRotationZ() {
-//     uint8_t buffer[14];
-//   I2Cdev::readBytes(MPU6050_ADDR, MPU6050_RA_GYRO_ZOUT_H, 2, buffer);
-//   return (((int16_t)buffer[0]) << 8) | buffer[1];
-//   }
-//   //routine from MPU6050.cpp
-  
-    
-//   void calibration()
-//  {
-//   //Here we do 100 readings for gyro sensitiv Z-axis output -gyroZ, we sum them and divide them by 100.
-//   // gyrZ0 mean value of gyroZ raw register values in 100 ms
-  
-//   unsigned short times = 100; //Sampling times
-//   for (int i = 0; i < times; i++)
-//   {
-//     gyroZ = getRotationZ();     // gyroZ - Raw register values gyroscope Z axis
-//     gyroZ0 += gyroZ; //sum all measured values gyroZ
-//   }
-//   gyroZ0 /= times; 
-//   }
-
-//  void calcYaw(){
-  
-//   unsigned long currentTime = millis();   //current time(ms)
-//   //get the current timestamp in Milliseconds since epoch time which is
-//   dt = (currentTime - lastTime) / 1000.0; //Differential time(s)
-//   lastTime = currentTime;                 //Last sampling time(ms)
-
-//   gyroZ = getRotationZ();
-  
-//   float angularZ = (gyroZ - gyroZ0) / 131.0 * dt; //angular z: =t
-//   if (fabs(angularZ) < 0.05) //
-//   {
-//     angularZ = 0.00;
-//   }
-//   gyroAngleZ += angularZ; //returns the absolute value of the z-axis rotazion integral 
-//   yaw = - gyroAngleZ;
-
-//   /*
-//   Serial.print(" | GyZo = "); Serial.print(toStr(gyroZ0));
-//   Serial.println();
-//   Serial.print(" | GyroAngle = "); Serial.print (gyroAngleZ);
-//   Serial.println();
-//   */
-//    }
-
-//    //++++++++++++++++++++++++
-   
- 
-// //   void driveStraight(int speed){
-// //   static unsigned long onTime;
-// //    //to compute corrSpeed(A/B) The yaw data is acquired at the first startup, and the data is updated every ten millisecundes.
-// //   if (millis() - onTime > 10){
-// //   corrSpeed(speed);
-// //   onTime = millis();  
-// //  }  
-// //   }
-  
-//   void corrSpeed(int myspeed){
-//   calcYaw();
-//   int  kp= 15; ////Add proportional constant - p( ???)
-//   //if drive direktion changes: corrSpeedA = mySpeedA - (yawOld - yaw) * kp;
-//   corrSpeedR = mySpeed + (yaw-yawOld)*kp; //maintain speed by speeding up right motor
-//   if (corrSpeedR > highspeed)
-//   {
-//     corrSpeedR = highspeed;
-//   }
-//   else if (corrSpeedR < lowspeed)
-//   {
-//     corrSpeedR = lowspeed;
-//   }
-//   //if drive direktion changes:corrSpeedB = mySpeedB + (yawOld - yaw) * kp;
-//   corrSpeedL = mySpeed - (yaw-yawOld)*kp; //if error is positive, slow down left motor
-//   if (corrSpeedL > highspeed)
-//   {
-//     corrSpeedL = highspeed;
-//   }
-//   else if (corrSpeedL < lowspeed)
-//   {
-//     corrSpeedL = lowspeed;
-//   }
-   
-//  }
-
-
-   //*****
-//    void forward(int is_speed){ 
-//   driveStraight(is_speed);
-
-//    //digitalWrite(ENA,HIGH);
-//   digitalWrite(STBY,HIGH);
-//   // A ... LEFT
-//   digitalWrite(IN1,HIGH); //set IN1 hight level enable A channel CW (automatic IN2 LOW)
-//   analogWrite(ENL,corrSpeedL);  //set EN for A RIGHT side speed
-//   //  B ... RIGHT
-//   digitalWrite(IN3,HIGH);  //set IN3 hight level enable B channel CW (automatisch IN4 LOW)
-//   analogWrite(ENR,corrSpeedR); //set EN for B LEFT side speed
-//   //Serial.println("Forward");//send message to serial monitor
-// }
-
-// void back(int is_speed){
-//   corrSpeed(is_speed);
-
-//   //digitalWrite(ENA,HIGH);
-//   digitalWrite(STBY,HIGH);
-//    // A ... LEFT 
-//   digitalWrite(IN1,LOW); //set IN1 LOW level enable A channel CCW (automatic IN2 HIGH)
-//   analogWrite(ENL,corrSpeedR);  //set EN for A RIGHT side speed
-//   //  B ... RIGHT
-//   digitalWrite(IN3,LOW);  //set IN3 hight level enable B channel CCW (automatic IN4 HIGH)
-//   analogWrite(ENR,corrSpeedL); //set EN for B LEFT side speed
-//   //Serial.println("Back");//send message to serial monitor
-// }
-
-// void left(int is_speed){
-//   digitalWrite(STBY,HIGH);
-//   //  A ... LEFT 
-//   digitalWrite(IN1,LOW); //set IN1 hight level enable 
-//   analogWrite(ENL,is_speed);  //set EN for A RIGHT side speed
-//      // B ... RIGHT
-//   digitalWrite(IN3,HIGH);  //set IN3 hight level enable 
-//   analogWrite(ENR,is_speed); //set EN for B LEFT side speed
-//   //Serial.println("Left");
-// }
-
-// void right(int is_speed){
-//   digitalWrite(STBY,HIGH);
-//   //  A ... LEFT
-//   digitalWrite(IN1,HIGH); //set IN1 LOW level enable A channel CCW (automatic IN2 HIGH)
-//   analogWrite(ENL,is_speed);  //set EN for A RIGHT side speed
-//    // B ... RIGHT
-//   digitalWrite(IN3,LOW);  //set IN3 hight level enable B channel CW (automatisch IN4 LOW)
-//   analogWrite(ENR,is_speed); //set EN for B LEFT side speed
-//   //Serial.println("Right");
-// }
-
-// void halt(){
-//   digitalWrite(STBY,LOW); 
-//   analogWrite(ENL,0);  //set A side speed 0
-  
-//   analogWrite(ENL,0); //set B side speed 0
-//   //Serial.println("stop");
-// }
-
-
-/*
-  LeftForward,  
-  LeftBackward, 
-  RightForward, 
-  RightBackward,
-  */
-
-// void driving (){//called by void loop(), which isDriving = true
-//   int deltaAngle = round(targetAngle - angle); //rounding is neccessary, since you never get exact values in reality
-//   forward();
-//   if (deltaAngle != 0){
-//     controlSpeed ();
-//     rightSpeedVal = maxSpeed;
-//     analogWrite(rightSpeed, rightSpeedVal);
-//     analogWrite(leftSpeed, leftSpeedVal);
-//   }
-// }
-
-// void controlSpeed (){//this function is called by driving ()
-//   int deltaAngle = round(targetAngle - angle);
-//   int targetGyroX;
-  
-//   //setting up propoertional control, see Step 3 on the website
-//   if (deltaAngle > 30){
-//       targetGyroX = 60;
-//   } else if (deltaAngle < -30){
-//     targetGyroX = -60;
-//   } else {
-//     targetGyroX = 2 * deltaAngle;
-//   }
-  
-//   if (round(targetGyroX - GyroX) == 0){
-//     ;
-//   } else if (targetGyroX > GyroX){
-//     leftSpeedVal = changeSpeed(leftSpeedVal, -1); //would increase GyroX
-//   } else {
-//     leftSpeedVal = changeSpeed(leftSpeedVal, +1);
-//   }
-// }
-
-// void rotate (){//called by void loop(), which isDriving = false
-//   int deltaAngle = round(targetAngle - angle);
-//   int targetGyroX;
-//   if (abs(deltaAngle) <= 1){
-//     stopCar();
-//   } else {
-//     if (angle > targetAngle) { //turn left
-//       left();
-//     } else if (angle < targetAngle) {//turn right
-//       right();
-//     }
-
-//     //setting up propoertional control, see Step 3 on the website
-//     if (abs(deltaAngle) > 30){
-//       targetGyroX = 60;
-//     } else {
-//       targetGyroX = 2 * abs(deltaAngle);
-//     }
-    
-//     if (round(targetGyroX - abs(GyroX)) == 0){
-//       ;
-//     } else if (targetGyroX > abs(GyroX)){
-//       leftSpeedVal = changeSpeed(leftSpeedVal, +1); //would increase abs(GyroX)
-//     } else {
-//       leftSpeedVal = changeSpeed(leftSpeedVal, -1);
-//     }
-//     rightSpeedVal = leftSpeedVal;
-//     analogWrite(rightSpeed, rightSpeedVal);
-//     analogWrite(leftSpeed, leftSpeedVal);
-//   }
-// }   
-
-int changeSpeed (int motorSpeed, int increment){
-  motorSpeed += increment;
-  if (motorSpeed > maxSpeed){ //to prevent motorSpeed from exceeding 255, which is a problem when using analogWrite
-    motorSpeed = maxSpeed;
-  } else if (motorSpeed < minSpeed){
-    motorSpeed = minSpeed;
-  }
-  return motorSpeed;
-}
 
 void calculateError() {
   //When this function is called, ensure the car is stationary. See Step 2 for more info
@@ -937,33 +549,3 @@ void readGyro() {
   GyroY = (Wire.read() << 8 | Wire.read()) / 131.0;
   GyroZ = (Wire.read() << 8 | Wire.read()) / 131.0;
 }
-
-// void stopCar(){
-//   digitalWrite(right1, LOW);
-//   digitalWrite(right2, LOW);
-//   digitalWrite(left1, LOW);
-//   digitalWrite(left2, LOW);
-//   analogWrite(rightSpeed, 0);
-//   analogWrite(leftSpeed, 0);
-// }
-
-// void forward(){ //drives the car forward, assuming leftSpeedVal and rightSpeedVal are set high enough
-//   digitalWrite(right1, HIGH); //the right motor rotates FORWARDS when right1 is HIGH and right2 is LOW
-//   digitalWrite(right2, LOW);
-//   digitalWrite(left1, HIGH);
-//   digitalWrite(left2, LOW);
-// }
-
-// void left(){ //rotates the car left, assuming speed leftSpeedVal and rightSpeedVal are set high enough
-//   digitalWrite(right1, LOW);
-//   digitalWrite(right2, HIGH);
-//   digitalWrite(left1, HIGH);
-//   digitalWrite(left2, LOW);
-// }
-
-// void right(){
-//   digitalWrite(right1, HIGH);
-//   digitalWrite(right2, LOW);
-//   digitalWrite(left1, LOW);
-//   digitalWrite(left2, HIGH);
-// }

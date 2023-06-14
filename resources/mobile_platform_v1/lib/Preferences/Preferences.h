@@ -2,7 +2,7 @@
 #define PREFERENCES_H
 
 // Mobile Platform
-#define MOTOR_SPEED -220
+#define MOTOR_SPEED 200
 #define RIGHT_SENSOR A3
 #define MIDDLE_SENSOR A2
 #define LEFT_SENSOR A4
@@ -32,5 +32,7 @@
 // #define wheelDiameter 0.1      // Diameter of the wheel in meters (adjust this to match your setup)
 // #define wheelCircumference wheelDiameter * PI
 // #define WHEELBASE 250
+
+
 
 #endif //PREFERENCES_H
