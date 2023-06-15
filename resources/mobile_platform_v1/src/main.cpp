@@ -59,8 +59,13 @@ void setGyroReadings();
 double Kp = 1.00, Ki = 0.001, Kd = 20.00; // Tune these values
 double integral = 0, previous_error = 0;
 
+double Kp_line = 1.0, Ki_line = 0.0, Kd_line = 5.0; // Tune these values
+double integral_line = 0, previous_error_line = 0;
+
 double PIDController(double target_heading);
 void rotateToAngle(double target_angle);
+
+void followLine(int stopDistance);
 
 enum State {
       PICK_TRAILER,
@@ -78,7 +83,8 @@ bool done;
 float mapToMotorSpeed(float pid_output);
 
 //Line following
-double PIDController(bool lineFollow);
+
+double PIDControllerLine();
 
 // Ultra sonic and distance stuff
 #define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters).
@@ -89,6 +95,7 @@ unsigned int pingSpeed = 100; // How frequently are we going to send out a ping 
 unsigned long pingTimer;     // Holds the next ping time.
 volatile int distance = 400;
 int distance_counter = 0;
+unsigned long previous_time_distance;
 
 // Prototypes
 void echoCheck();
@@ -97,6 +104,10 @@ void echoCheck();
 void setup() {
   platform.setup ();
   Serial.begin(9600);
+
+  // ultrasonic
+  pingTimer = millis(); // Start now.
+
    //gyro
   Wire.begin();                      // Initialize comunication
   Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
@@ -117,6 +128,12 @@ void setup() {
   //   Serial.print("\t||\tRIGHT_SENSOR: ");
   //   Serial.println(analogRead(RIGHT_SENSOR));
   // }
+
+  followLine(50);
+  while (true) {
+    Serial.println("stop");
+    customDelay(1000);
+  }
 }
 void loop() {
   setGyroReadings();
@@ -141,10 +158,9 @@ void loop() {
       rotateToAngle(-80, 10);
       targetAngle = -80;
       moveDistance(1000, true);
-      
-      // Follow the  line
-      // Stop when distance <= 50
-      // Wait to pick wheels
+
+      // Follow the  line and Stop when distance <= 50
+      customDelay(5000); // Wait to pick wheels
       state = PICK_WHEELS;
       break;
     case PICK_WHEELS:
@@ -316,7 +332,9 @@ double PIDController(double target_heading) {
   return P + I + D;
 }
 
-double PIDController(bool lineFollow) {
+double PIDControllerLine() {
+    setGyroReadings();
+
     // Read the sensor values
     int sensorValues[] = {
       analogRead(LEFT_SENSOR),
@@ -325,20 +343,20 @@ double PIDController(bool lineFollow) {
       };
 
     // Calculate the error
-    double error = (sensorValues[0] - 100) - sensorValues[2];
+    double error = (sensorValues[0]) - ((sensorValues[2]));
 
      // Proportional term
-    double P = Kp * error;
+    double P = Kp_line * error;
 
     // Integral term
-    integral += error;
-    double I = Ki * integral;
+    integral_line += error;
+    double I = Ki_line * integral_line;
 
     // Derivative term
-    double D = Kd * (error - previous_error);
+    double D = Kd_line * (error - previous_error_line);
     
     // Remember the error for the next time
-    previous_error = error;
+    previous_error_line = error;
 
     // The PID controller output
     return P + I + D;
@@ -507,9 +525,9 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
   // Don't do anything here!
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
     // // Here's where you can add code.
-    // Serial.print("Ping: ");
-    // Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    // Serial.println("cm");
+    Serial.print("Ping: ");
+    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    Serial.println("cm");
     distance = sonar.ping_result / US_ROUNDTRIP_CM;
   }
   // Don't do anything here!
@@ -520,4 +538,50 @@ float mapToMotorSpeed(float pid_output) {
   pid_output = constrain(pid_output, 0.0, 1.0);
   // Map from PID output to motor speed
   return pid_output * (240 - 220) + 220;
+}
+
+void followLine(int stopDistance) {
+  sonar.ping_timer(echoCheck);
+  customDelay(100);
+  // Initialize speeds
+  // int currentSpeedRight = minSpeed; // Start at minSpeed for right wheel
+  // int currentSpeedLeft = minSpeed; // Start at minSpeed for left wheel
+  previous_time_distance = millis();
+
+  while (true) {
+    // Check obstacle distance
+    if (millis() >= pingTimer) {
+      pingTimer += pingSpeed;      // Set the next ping time.
+      sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+    }
+
+    // Keep updating angles: improves accuracy
+    setGyroReadings();
+    
+
+    // Follow Line
+     // Get the PID controller output
+    double pidOutput = PIDControllerLine();
+
+    // // Adjust the speeds
+    // currentSpeedRight = constrain(currentSpeedRight + pidOutput, minSpeed, maxSpeed);
+    // currentSpeedLeft = constrain(currentSpeedLeft - pidOutput, minSpeed, maxSpeed);
+
+    // // Apply the new speeds
+    // moveCar(currentSpeedLeft, currentSpeedRight);
+    platform.rotateMotor(MOTOR_SPEED - pidOutput, MOTOR_SPEED + pidOutput);
+
+    if (distance <= 10 && ((millis() - PREVIOUS_TIME) > 3000)) {
+      break;
+    }
+  }
+
+  // Stop the car
+  digitalWrite(LEFT_MOTOR_PIN1, LOW);
+  digitalWrite(LEFT_MOTOR_PIN2, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN1, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+
+  analogWrite(ENABLE_LEFT_MOTOR, 0); // control speed of left motor
+  analogWrite(ENABLE_RIGHT_MOTOR, 0); // control speed of right motor
 }

@@ -17,13 +17,14 @@ class MobilePlatform {
     };
 
     State currentState;
-    void rotateMotor(int rightMotorSpeed, int leftMotorSpeed);
+    
     void setMotorState(int motorPin1, int motorPin2, int motorSpeed);
     void configurePins();
     void configurePWMFrequency();
 
 
   public:
+    void rotateMotor(int rightMotorSpeed, int leftMotorSpeed);
     MobilePlatform();
     Gyro gyro;
     void setup();
