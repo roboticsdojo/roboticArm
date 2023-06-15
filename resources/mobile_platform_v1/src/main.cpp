@@ -134,7 +134,7 @@ void setup() {
   //   Serial.println("stop");
   //   customDelay(1000);
   // }
-}
+
 void loop() {
   setGyroReadings();
   switch (state) {
@@ -146,9 +146,9 @@ void loop() {
       state = PICK_ENGINE;
       break;
     case PICK_ENGINE:
-      customDelay(1000);
-      rotateToAngle(-150,10);
-      customDelay(200);
+      fastRotate(-150);
+      customDelay(1500);
+      rotateToAngle(-150, 5);
       targetAngle = -(150);
       moveDistance(850);
 
@@ -531,9 +531,9 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
   // Don't do anything here!
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
     // // Here's where you can add code.
-    // Serial.print("Ping: ");
-    // Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    // Serial.println("cm");
+    Serial.print("Ping: ");
+    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    Serial.println("cm");
     distance = sonar.ping_result / US_ROUNDTRIP_CM;
   }
   // Don't do anything here!
@@ -579,6 +579,52 @@ void followLine(int stopDistance) {
     platform.rotateMotor(MOTOR_SPEED - pidOutput, MOTOR_SPEED + pidOutput);
 
     if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 3000)) {
+      break;
+    }
+  }
+
+  // Stop the car
+  digitalWrite(LEFT_MOTOR_PIN1, LOW);
+  digitalWrite(LEFT_MOTOR_PIN2, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN1, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+
+  analogWrite(ENABLE_LEFT_MOTOR, 0); // control speed of left motor
+  analogWrite(ENABLE_RIGHT_MOTOR, 0); // control speed of right motor
+}
+
+void followLine(int stopDistance) {
+  sonar.ping_timer(echoCheck);
+  customDelay(100);
+  // Initialize speeds
+  // int currentSpeedRight = minSpeed; // Start at minSpeed for right wheel
+  // int currentSpeedLeft = minSpeed; // Start at minSpeed for left wheel
+  previous_time_distance = millis();
+
+  while (true) {
+    // Check obstacle distance
+    if (millis() >= pingTimer) {
+      pingTimer += pingSpeed;      // Set the next ping time.
+      sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+    }
+
+    // Keep updating angles: improves accuracy
+    setGyroReadings();
+    
+
+    // Follow Line
+     // Get the PID controller output
+    double pidOutput = PIDControllerLine();
+
+    // // Adjust the speeds
+    // currentSpeedRight = constrain(currentSpeedRight + pidOutput, minSpeed, maxSpeed);
+    // currentSpeedLeft = constrain(currentSpeedLeft - pidOutput, minSpeed, maxSpeed);
+
+    // // Apply the new speeds
+    // moveCar(currentSpeedLeft, currentSpeedRight);
+    platform.rotateMotor(MOTOR_SPEED - pidOutput, MOTOR_SPEED + pidOutput);
+
+    if (distance <= 10 && ((millis() - PREVIOUS_TIME) > 3000)) {
       break;
     }
   }
