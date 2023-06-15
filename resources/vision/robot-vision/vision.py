@@ -2,6 +2,7 @@ from roboflow import Roboflow
 import cv2
 import numpy as np
 import json
+from datetime import datetime
 
 
 # Initialize Inference Model
@@ -104,6 +105,8 @@ def infer_from_video_stream():
 
 def video_snap_infer():
     while cap.isOpened():
+        now = datetime.now()
+
         ret, frame = cap.read()
         if not ret:
             print("Failed to Capture")
@@ -115,10 +118,14 @@ def video_snap_infer():
 
         if cv2.waitKey(1) & 0xFF == ord('l'):
             # Infer on snapshot
-            print("Infer on snapshot")
+            print(f"[{now}]> Infer on snapshot")
             result = model.predict(frame, confidence=40, overlap=30)
             print(result.json())
-            result.save("video_snap_infer.jpg")
+            if result.json()['predictions']:
+                result.save("video_snap_infer.jpg")
+                print(f"[{now}]> Save result as image [SUCCESS]")
+            else:
+                print(f"[{now}]> No prediction")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
