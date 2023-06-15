@@ -155,32 +155,37 @@ void loop() {
 
       // Move and detect line
       targetAngle = -130;
-      moveDistance(400, true); // Set to true to move and detect line
+      moveDistance(2000, true); // Set to true to move and detect line
       moveDistance(200);
-      // rotateToAngle(-80, 10);
-      // targetAngle = -80;
-      // moveDistance(1000, true);
+      rotateToAngle(-80, 10);
+      targetAngle = -80;
+      moveDistance(1000, true);
+      followLine(50);
+      customDelay(2000); // wait to pick engine
 
       // Follow the  line and Stop when distance <= 50
       customDelay(5000); // Wait to pick wheels
       state = PICK_WHEELS;
       break;
     case PICK_WHEELS:
-      // Turn Left
-      // Move Straight until meet line
-      // Turn Right
-      // Wait to pick wheels
+      rotateToAngle(0, 10); // Turn Left
+      targetAngle = 0;
+      moveDistance(1000, true); // Move Straight until meet line
+      rotateToAngle(-90, 10); // Turn Right
+      customDelay(2000);// Wait to pick wheels
       state = BACK_TO_CHASIS;
       break;
     case BACK_TO_CHASIS:
-      // Rotate 180
-      // Follow Line to chasis
-      // Stop when distance <= 50
-      // Wait to drop staff
+      rotateToAngle(90, 10); // Rotate 180
+      followLine(50); // Follow Line to chasis and Stop at distance <= 50
+      customDelay(2000); // Wait to drop staff
       state = PICK_CABIN;
       break;
     case PICK_CABIN:
-      // Go to ramp
+      rotateToAngle(0, 10);
+      targetAngle = 0;
+      moveDistance(600);
+      moveDistance(1000, true);
       // Climb ramp
       // Stop when distance <= 50
       // Wait to pick cabin
