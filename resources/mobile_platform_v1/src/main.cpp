@@ -129,11 +129,11 @@ void setup() {
   //   Serial.println(analogRead(RIGHT_SENSOR));
   // }
 
-  followLine(50);
-  while (true) {
-    Serial.println("stop");
-    customDelay(1000);
-  }
+  // followLine(50);
+  // while (true) {
+  //   Serial.println("stop");
+  //   customDelay(1000);
+  // }
 }
 void loop() {
   setGyroReadings();
@@ -146,6 +146,7 @@ void loop() {
       state = PICK_ENGINE;
       break;
     case PICK_ENGINE:
+      customDelay(1000);
       rotateToAngle(-150,10);
       customDelay(200);
       targetAngle = -(150);
@@ -153,32 +154,37 @@ void loop() {
 
       // Move and detect line
       targetAngle = -130;
-      moveDistance(400, true); // Set to true to move and detect line
-      moveDistance(40);
+      moveDistance(2000, true); // Set to true to move and detect line
+      moveDistance(200);
       rotateToAngle(-80, 10);
       targetAngle = -80;
       moveDistance(1000, true);
+      followLine(50);
+      customDelay(2000); // wait to pick engine
 
       // Follow the  line and Stop when distance <= 50
       customDelay(5000); // Wait to pick wheels
       state = PICK_WHEELS;
       break;
     case PICK_WHEELS:
-      // Turn Left
-      // Move Straight until meet line
-      // Turn Right
-      // Wait to pick wheels
+      rotateToAngle(0, 10); // Turn Left
+      targetAngle = 0;
+      moveDistance(1000, true); // Move Straight until meet line
+      rotateToAngle(-90, 10); // Turn Right
+      customDelay(2000);// Wait to pick wheels
       state = BACK_TO_CHASIS;
       break;
     case BACK_TO_CHASIS:
-      // Rotate 180
-      // Follow Line to chasis
-      // Stop when distance <= 50
-      // Wait to drop staff
+      rotateToAngle(90, 10); // Rotate 180
+      followLine(50); // Follow Line to chasis and Stop at distance <= 50
+      customDelay(2000); // Wait to drop staff
       state = PICK_CABIN;
       break;
     case PICK_CABIN:
-      // Go to ramp
+      rotateToAngle(0, 10);
+      targetAngle = 0;
+      moveDistance(600);
+      moveDistance(1000, true);
       // Climb ramp
       // Stop when distance <= 50
       // Wait to pick cabin
@@ -275,10 +281,10 @@ void moveDistance(double distance_mm, bool detectLine = false) {
     // Update the current distances
     setDistanceLeft();
     setDistanceRight();
-    Serial.print("Distance Left: ");
-    Serial.print(distanceLeft);
-    Serial.print("\t||\tDistance Right: ");
-    Serial.println(distanceRight);
+    // Serial.print("Distance Left: ");
+    // Serial.print(distanceLeft);
+    // Serial.print("\t||\tDistance Right: ");
+    // Serial.println(distanceRight);
 
     // Get the PID controller output
     double pidOutput = PIDController(targetAngle);
@@ -295,7 +301,7 @@ void moveDistance(double distance_mm, bool detectLine = false) {
       break;
     }
 
-    if (detectLine && (analogRead(LEFT_SENSOR) > 600 || analogRead(RIGHT_SENSOR) > 600)) {
+    if (detectLine && (analogRead(LEFT_SENSOR) > 650 || analogRead(RIGHT_SENSOR) > 650)) {
       break;
     }
   }
@@ -525,9 +531,9 @@ void echoCheck() { // Timer2 interrupt calls this function every 24uS where you 
   // Don't do anything here!
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
     // // Here's where you can add code.
-    Serial.print("Ping: ");
-    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    Serial.println("cm");
+    // Serial.print("Ping: ");
+    // Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    // Serial.println("cm");
     distance = sonar.ping_result / US_ROUNDTRIP_CM;
   }
   // Don't do anything here!
@@ -537,12 +543,13 @@ float mapToMotorSpeed(float pid_output) {
   // Ensure pid_output is between 0 and 1
   pid_output = constrain(pid_output, 0.0, 1.0);
   // Map from PID output to motor speed
-  return pid_output * (240 - 220) + 220;
+  return pid_output * (240 - 230) + 230;
 }
 
 void followLine(int stopDistance) {
+  distance = 200;
   sonar.ping_timer(echoCheck);
-  customDelay(100);
+  customDelay(200);
   // Initialize speeds
   // int currentSpeedRight = minSpeed; // Start at minSpeed for right wheel
   // int currentSpeedLeft = minSpeed; // Start at minSpeed for left wheel
@@ -571,7 +578,7 @@ void followLine(int stopDistance) {
     // moveCar(currentSpeedLeft, currentSpeedRight);
     platform.rotateMotor(MOTOR_SPEED - pidOutput, MOTOR_SPEED + pidOutput);
 
-    if (distance <= 10 && ((millis() - PREVIOUS_TIME) > 3000)) {
+    if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 3000)) {
       break;
     }
   }
