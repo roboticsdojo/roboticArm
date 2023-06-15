@@ -8,7 +8,7 @@ void MobilePlatform::setup() {
   gyro.setup();
   configurePins();
   configurePWMFrequency();
-  rotateMotor(0, 0);
+  // rotateMotor(0, 0);
 }
 
 void MobilePlatform::loop() {
@@ -16,11 +16,11 @@ void MobilePlatform::loop() {
 
 void MobilePlatform::configurePins() {
   pinMode(RIGHT_SENSOR, INPUT);
-  pinMode(MIDDLE_SENSOR, INPUT);
+  // pinMode(MIDDLE_SENSOR, INPUT);
   pinMode(LEFT_SENSOR, INPUT);
 
-  pinMode(FAR_RIGHT, INPUT);
-  pinMode(FAR_LEFT, INPUT);
+  // pinMode(FAR_RIGHT, INPUT);
+  // pinMode(FAR_LEFT, INPUT);
 
   pinMode(ENABLE_LEFT_MOTOR, OUTPUT);
   pinMode(RIGHT_MOTOR_PIN1, OUTPUT);
@@ -30,11 +30,8 @@ void MobilePlatform::configurePins() {
   pinMode(LEFT_MOTOR_PIN1, OUTPUT);
   pinMode(LEFT_MOTOR_PIN2, OUTPUT);
 
-  pinMode(TRIGPIN, OUTPUT);
-  pinMode(ECHOPIN, INPUT);  
-
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
+  // pinMode(TRIGPIN, OUTPUT);
+  // pinMode(ECHOPIN, INPUT);  
 }
 
 void MobilePlatform::configurePWMFrequency() {
@@ -48,6 +45,15 @@ void MobilePlatform::configurePWMFrequency() {
 
 
 void MobilePlatform::rotateMotor(int rightMotorSpeed, int leftMotorSpeed) {
+  if (rightMotorSpeed > 240) rightMotorSpeed = 240;
+  if (rightMotorSpeed < -240) rightMotorSpeed = -240;
+  if (leftMotorSpeed > 240) leftMotorSpeed = 240;
+  if (leftMotorSpeed < -240) leftMotorSpeed = -240;
+  if (rightMotorSpeed > -200 && rightMotorSpeed <= 0) rightMotorSpeed = -220;
+  if (rightMotorSpeed < 200 && rightMotorSpeed >= 0) rightMotorSpeed = 220;
+  if (leftMotorSpeed > -200 && leftMotorSpeed <= 0) leftMotorSpeed = -220;
+  if (leftMotorSpeed < 200 && leftMotorSpeed >= 0) leftMotorSpeed = 220;
+  
   setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, rightMotorSpeed);
   setMotorState(LEFT_MOTOR_PIN1, LEFT_MOTOR_PIN2, leftMotorSpeed);
   
