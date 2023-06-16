@@ -15,17 +15,18 @@ String getValue(String data, char separator, int index);
 
 void setup() {
   Serial.begin(9600);
+  // Serial.println("Waiting for message...");
 }
 
 void loop() {
 
   // 1. Poll Serial for information
-  // if (Serial.available() > 0) {
-    // String data = Serial.readStringUntil('\n');
-    String data = "0|10|20|30\n";
-    Serial.print("[Arduino Rx]> ");
-    Serial.print(data);
-    Serial.println();
+  if (Serial.available() > 0) {
+    String data = Serial.readStringUntil('\n');
+    // String data = "0|10|20|30\n";
+    // Serial.print("[Arduino Rx]> ");
+    // Serial.print(data);
+    // Serial.println();
 
     // 2. Determine whether to pick or place from message
 
@@ -39,17 +40,17 @@ void loop() {
     String y_coord = getValue(data,'|',2);
     String z_coord = getValue(data,'|',3);
 
-    Serial.print("Parsed Message: ");
-    Serial.print(action);
-    Serial.print(" ");
-    Serial.print(x_coord);
-    Serial.print(" ");
-    Serial.print(y_coord);
-    Serial.print(" ");
-    Serial.print(z_coord);
-    Serial.println();
+    // Serial.print("Parsed Message: ");
+    // Serial.print(action);
+    // Serial.print(" ");
+    // Serial.print(x_coord);
+    // Serial.print(" ");
+    // Serial.print(y_coord);
+    // Serial.print(" ");
+    // Serial.print(z_coord);
+    // Serial.println();
 
-  // }
+  
 
   // typecast action to int
   int a = action.toInt();
@@ -72,21 +73,25 @@ void loop() {
   } else{
       Serial.println("PLACING");
   }
+  }
 
-  delay(3000);
+  // delay(3000);
+  // Serial.println("Waiting for message...");
 
 }
 
 // IK Function
 int pick(int x, int y, int z) {
 
-  Serial.print("Picking at: ");
-  Serial.print(x);
-  Serial.print(" ");
-  Serial.print(y);
-  Serial.print(" ");
-  Serial.print(z);
-  Serial.println();
+  // Serial.print("Picking at: ");
+  // Serial.print(x);
+  // Serial.print(" ");
+  // Serial.print(y);
+  // Serial.print(" ");
+  // Serial.print(z);
+  // Serial.println();
+
+  delay(3000);
 
   // 5. Return SUCCESS if SUCCESS, else return FAILURE (after picking)
   return 1;
