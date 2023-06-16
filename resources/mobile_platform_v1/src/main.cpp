@@ -135,7 +135,11 @@ void setup() {
   //   Serial.println("stop");
   //   customDelay(1000);
   // }
-}
+ //mapping
+
+=======
+//}
+
 void loop() {
   setGyroReadings();
   switch (state) {
@@ -302,7 +306,7 @@ void moveDistance(double distance_mm, bool detectLine = false) {
       break;
     }
 
-    if (detectLine && (analogRead(LEFT_SENSOR) > 600 || analogRead(RIGHT_SENSOR) > 600)) {
+    if (detectLine && (analogRead(LEFT_SENSOR) > 650 || analogRead(RIGHT_SENSOR) > 650)) {
       break;
     }
   }
@@ -544,7 +548,54 @@ float mapToMotorSpeed(float pid_output) {
   // Ensure pid_output is between 0 and 1
   pid_output = constrain(pid_output, 0.0, 1.0);
   // Map from PID output to motor speed
-  return pid_output * (240 - 220) + 220;
+  return pid_output * (240 - 230) + 230;
+}
+
+void followLine(int stopDistance) {
+  distance = 200;
+  sonar.ping_timer(echoCheck);
+  customDelay(200);
+  // Initialize speeds
+  // int currentSpeedRight = minSpeed; // Start at minSpeed for right wheel
+  // int currentSpeedLeft = minSpeed; // Start at minSpeed for left wheel
+  previous_time_distance = millis();
+
+  while (true) {
+    // Check obstacle distance
+    if (millis() >= pingTimer) {
+      pingTimer += pingSpeed;      // Set the next ping time.
+      sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+    }
+
+    // Keep updating angles: improves accuracy
+    setGyroReadings();
+    
+
+    // Follow Line
+     // Get the PID controller output
+    double pidOutput = PIDControllerLine();
+
+    // // Adjust the speeds
+    // currentSpeedRight = constrain(currentSpeedRight + pidOutput, minSpeed, maxSpeed);
+    // currentSpeedLeft = constrain(currentSpeedLeft - pidOutput, minSpeed, maxSpeed);
+
+    // // Apply the new speeds
+    // moveCar(currentSpeedLeft, currentSpeedRight);
+    platform.rotateMotor(MOTOR_SPEED - pidOutput, MOTOR_SPEED + pidOutput);
+
+    if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 3000)) {
+      break;
+    }
+  }
+
+  // Stop the car
+  digitalWrite(LEFT_MOTOR_PIN1, LOW);
+  digitalWrite(LEFT_MOTOR_PIN2, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN1, LOW);
+  digitalWrite(RIGHT_MOTOR_PIN2, LOW);
+
+  analogWrite(ENABLE_LEFT_MOTOR, 0); // control speed of left motor
+  analogWrite(ENABLE_RIGHT_MOTOR, 0); // control speed of right motor
 }
 
 void followLine(int stopDistance) {
