@@ -32,7 +32,7 @@ void setDistanceRight();
 void setDistanceLeft();
 void moveDistance(double distance_mm, bool detectLine = false);
 
-int minSpeed = 180; // Minimum motor speed
+int minSpeed = 220; // Minimum motor speed
 int maxSpeed = 240; // Maximum motor speed
 
 
@@ -99,6 +99,7 @@ unsigned long previous_time_distance;
 
 // Prototypes
 void echoCheck();
+void fastRotate (int target_angle);
 
 
 void setup() {
@@ -134,6 +135,10 @@ void setup() {
   //   Serial.println("stop");
   //   customDelay(1000);
   // }
+ //mapping
+
+=======
+//}
 
 void loop() {
   setGyroReadings();
@@ -141,7 +146,7 @@ void loop() {
     case PICK_TRAILER:
       moveDistance(1500);
       customDelay(200);
-      rotateToAngle(90, 10);
+      rotateToAngle(90, 5);
       customDelay(5000);//wait for the trailer to be picked
       state = PICK_ENGINE;
       break;
@@ -515,7 +520,7 @@ void rotateToAngle(float target_angle, float tolerance) {//tolerance = 2.0
 
     // // note: we might need to adjust the sign of pid_output depending on setup
     // moveCar(pid_output, -pid_output);
-    if (pid_output < 0) { // If PID output is negative, rotate in the opposite direction
+    if (pid_output > 0) { // If PID output is negative, rotate in the opposite direction
       moveCar(-motor_speed, motor_speed);
     } else {
       moveCar(motor_speed, -motor_speed);
@@ -624,7 +629,7 @@ void followLine(int stopDistance) {
     // moveCar(currentSpeedLeft, currentSpeedRight);
     platform.rotateMotor(MOTOR_SPEED - pidOutput, MOTOR_SPEED + pidOutput);
 
-    if (distance <= 10 && ((millis() - PREVIOUS_TIME) > 3000)) {
+    if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 3000)) {
       break;
     }
   }
@@ -637,4 +642,23 @@ void followLine(int stopDistance) {
 
   analogWrite(ENABLE_LEFT_MOTOR, 0); // control speed of left motor
   analogWrite(ENABLE_RIGHT_MOTOR, 0); // control speed of right motor
+}
+
+
+void fastRotate (int target_angle) {
+  int left_speed;
+  int right_speed;
+
+  if (target_angle > 0) {
+    left_speed = -250;
+    right_speed = 250;
+  }
+  else {
+    left_speed = 250;
+    right_speed = -250;
+  }
+
+  // while (abs(target_angle - angle) > 10) {
+  moveCar(left_speed, right_speed);
+  // }
 }
