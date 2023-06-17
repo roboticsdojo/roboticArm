@@ -2,32 +2,30 @@ import serial
 import time
 
 
-# * Pi - Arduino Arm Communication
-# 1. Pi polls GPIO for event from Mobile-Platform
-# 2. If GPIO.Pick is detected, run camera_inference function
-# 3. Get coordinates from camera_inference function
-# 4. Pass the action + coordinates via serial to Arm
-# 5. Arm executes action -> Await message from Arm
-# 6. If message is SUCCESS, send GPIO.Go to Mobile-Platform
-#! 7. If message is FAIL, send GPIO.Fail to Mobile-Platform
-# 8. Mobile-Platform pulls GPIO.Pick low
-# ? 9. Pi pulls GPIO.Go low (for next cycle)
+# Setup Serial Communication
+ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+ser.reset_input_buffer()
+
+# Camera Inference Function
 
 
-if __name__ == '__main__':
-    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-    ser.reset_input_buffer()
+def camera_inference():
+    x, y, z = 10, 20, 30
 
-    # Camera Inference Function
-    def camera_inference():
-        x, y, z = 10, 20, 30
+    return (x, y, z)
 
-        return (x, y, z)
 
-    gpio_go = 0
-
+def arm_comms_simulator(gpio_pick: int = 0, gpio_place: int = 0):
+    # * Pi - Arduino Arm Communication
     # 1. Pi polls GPIO for event from Mobile-Platform
-    gpio_pick = 1
+    # 2. If GPIO.Pick is detected, run camera_inference function
+    # 3. Get coordinates from camera_inference function
+    # 4. Pass the action + coordinates via serial to Arm
+    # 5. Arm executes action -> Await message from Arm
+    # 6. If message is SUCCESS, send GPIO.Go to Mobile-Platform
+    #! 7. If message is FAIL, send GPIO.Fail to Mobile-Platform
+    # 8. Mobile-Platform pulls GPIO.Pick low
+    # ? 9. Pi pulls GPIO.Go low (for next cycle)
 
     while True:
         # 2. If GPIO.Pick is detected, run camera_inference function
@@ -65,13 +63,17 @@ if __name__ == '__main__':
 
         # 6. If message is SUCCESS, send GPIO.Go to Mobile-Platform
         if arm_msg == "SUCCESS":
-            gpio_go = 1
 
             print("Mobile Platform Go")
             # 8. Mobile-Platform pulls GPIO.Pick low
-            gpio_pick = 0
+            # gpio_pick = 0
+
+            return 1
 
             # ? Run Loop again
-            break
+            # break
 
         # time.sleep(1)
+
+
+arm_comms_simulator(1)
