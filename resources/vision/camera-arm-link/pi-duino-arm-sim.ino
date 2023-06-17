@@ -70,6 +70,7 @@ void loop() {
     } else {
       Serial.println("FAILURE");
     }
+    pickStatus = 0;
   } else{
       Serial.println("PLACING");
   }

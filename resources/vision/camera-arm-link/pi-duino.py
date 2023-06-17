@@ -1,10 +1,24 @@
+import RPi.GPIO as GPIO
 import serial
 import time
 
 
 # Setup Serial Communication
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyACM2', 9600, timeout=1)
 ser.reset_input_buffer()
+
+# Setup GPIO
+pick_pin = 23
+place_pin = 24
+go_pin = 25
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(pick_pin, GPIO.IN)
+GPIO.setup(place_pin, GPIO.IN)
+GPIO.setup(go_pin, GPIO.OUT)
+
+
+mobile_platform_event = 0
 
 # Camera Inference Function
 
@@ -44,10 +58,15 @@ def arm_comms_simulator(gpio_pick: int = 0, gpio_place: int = 0):
             print(f"Sending formatted_msg: {formatted_msg}")
 
             # Send message to Arm
+            ser.flushInput()
             ser.write(formatted_msg.encode('utf-8'))
             # 5. Arm executes action -> Await message from Arm
 
         # 5. Arm executes action -> # Await message from Arm
+        ser.flushInput()
+        ser.flushOutput()
+        # readall = ser.read_all()
+        # print(readall)
         arm_msg = ser.readline().decode('utf-8').rstrip()
         if arm_msg:
             print(f"Received arm_msg: {arm_msg}")
@@ -63,11 +82,6 @@ def arm_comms_simulator(gpio_pick: int = 0, gpio_place: int = 0):
 
         # 6. If message is SUCCESS, send GPIO.Go to Mobile-Platform
         if arm_msg == "SUCCESS":
-
-            print("Mobile Platform Go")
-            # 8. Mobile-Platform pulls GPIO.Pick low
-            # gpio_pick = 0
-
             return 1
 
             # ? Run Loop again
@@ -76,4 +90,46 @@ def arm_comms_simulator(gpio_pick: int = 0, gpio_place: int = 0):
         # time.sleep(1)
 
 
-arm_comms_simulator(1)
+# arm_comms_simulator(1)
+
+
+# * Super Loop
+while True:
+
+    # * Mobile-Platform - Pi Communication Simulator
+    # 1. Pi Polls GPIO for event from Mobile-Platform
+    # 2. If GPIO.23 is high, action = Pick
+    # 3. If GPIO.24 is high, action = Place
+
+    # 1. Pi Polls GPIO for event from Mobile-Platform
+    pick_event = GPIO.input(pick_pin)
+    place_event = GPIO.input(place_pin)
+
+    # 2. If GPIO.23 is high, action = Pick
+    # print(readall)
+    if pick_event:
+        # // action = 0
+        mobile_platform_event = arm_comms_simulator(1, 0)
+
+    # 3. If GPIO.24 is high, action = Place
+    elif place_event:
+        # // action = 1
+        mobile_platform_event = arm_comms_simulator(0, 1)
+
+    if mobile_platform_event:
+        print("Mobile Platform Go")
+        GPIO.output(go_pin, True)
+        place_event = 0
+        pick_event = 0
+
+        # 8. Mobile-Platform pulls GPIO.Pick or GPIO.Place low
+        # give mobile platform time to pull GPIO low
+        time.sleep(1)
+        pick_event = GPIO.input(pick_pin)
+
+        # 9. Pi pulls GPIO.Go low (for next cycle)
+        if not pick_event:
+            GPIO.output(go_pin, False)
+            mobile_platform_event = 0
+            print("Event Cycle Complete")
+            print("---------------------------------------\n")
