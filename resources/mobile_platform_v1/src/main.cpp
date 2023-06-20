@@ -9,7 +9,7 @@
 MobilePlatform platform;
 
 void moveCar(int speedLeft, int speedRight);
-void rotateToAngle(float target_angle, float tolerance);
+void rotateToAngle(float target_angle, float tolerance, bool fast = false);
 
 // Encoders
 // Motor Parameters
@@ -54,11 +54,13 @@ void setGyroReadings();
 
 // Global variables
 // double Kp = 1.00, Ki = 0.001, Kd = 20.00; // Tune these values
-double Kp = 8.00, Ki = 25.00, Kd = 35.00; // Tune these values
+// double Kp = 8.00, Ki = 25.00, Kd = 35.00; // Tune these values
+double Kp = 0.5, Ki = 0.0002, Kd = 100.00; // Tune these values
+
 double integral = 0, previous_error = 0;
 
-double Kp_line = 1.0, Ki_line = 0.0, Kd_line = 5.0; // Tune these values
-// double Kp_line = 1000.0, Ki_line = 0.01, Kd_line = 10.0; // Tune these values
+// double Kp_line = 1.0, Ki_line = 0.0, Kd_line = 5.0; // Tune these values
+double Kp_line = 0.05, Ki_line = 0.0002, Kd_line = 20.0; // Tune these values
 double integral_line = 0, previous_error_line = 0;
 
 double PIDController(double target_heading);
@@ -100,6 +102,7 @@ unsigned long previous_time_distance;
 // Prototypes
 void echoCheck();
 void fastRotate(int target_angle);
+float mapToMotorSpeed2(float pid_output);
 
 void setup()
 {
@@ -148,7 +151,8 @@ void setup()
   //   Serial.println(analogRead(RIGHT_SENSOR));
   // }
 
-  // followLine(0);
+  // followLine(50);
+  // moveDistance(4000);
   // moveCar(-240, -240);
   // customDelay(5000);
   // moveCar(240, -240);
@@ -184,7 +188,7 @@ void loop()
     break;
   case PICK_ENGINE:
     // Rotate
-    rotateToAngle(45, 10);
+    rotateToAngle(45, 1, true);
     customDelay(100);
     rotateToAngle(-10, 10);
     customDelay(100);
@@ -201,7 +205,14 @@ void loop()
     targetAngle = -(150);
     moveDistance(1000, true); // move and detect line
     customDelay(100);
-    moveDistance(200);        // Move past line
+    moveDistance(100);        // Move past line
+    // new
+    // rotateToAngle(-90, 10);
+    // customDelay(100);
+    // targetAngle = -90;
+    // moveDistance(4000);
+
+    // *******************
     moveDistance(1000, true); // move and detect second line
     customDelay(100);
     moveDistance(80); // Move past line
@@ -215,16 +226,23 @@ void loop()
     // rotateToAngle(-70, 5);
     customDelay(100);
     targetAngle = -60;
+    minSpeed = 130;
+    maxSpeed = 140;
     moveDistance(500, true);
+    customDelay(300);
+    rotateToAngle(-80,10);
     followLine(50); // Follow the  line and Stop when distance <= 50
 
     customDelay(2000); // wait to pick engine
+
+    minSpeed = 150;
+    maxSpeed = 180;
 
     state = PICK_WHEELS;
     // state = STOP;
     break;
   case PICK_WHEELS:
-    rotateToAngle(-60, 10); // Turn Left
+    rotateToAngle(-60, 10, true); // Turn Left
     customDelay(100);
     rotateToAngle(-40, 10);
     customDelay(100);
@@ -232,10 +250,12 @@ void loop()
     customDelay(100);
     // rotateToAngle(0, 10);
     targetAngle = 0;
-    moveDistance(100); // Move past line, just in case
-    moveDistance(1000, true);
-    moveDistance(100); // Move past line, just in case
-    customDelay(100);
+    minSpeed = 130;
+    maxSpeed =150;
+    moveDistance(50); // Move past line, just in case
+    moveDistance(800, true);
+    // moveDistance(100); // Move past line, just in case
+    // customDelay(100);
     rotateToAngle(-30, 10);
     customDelay(100);
     rotateToAngle(-45, 10);
@@ -254,6 +274,11 @@ void loop()
     // state = STOP;
     break;
   case BACK_TO_CHASIS:
+    minSpeed = 150;
+    maxSpeed =180;
+    rotateToAngle(60, 10);
+    moveDistance(80);
+    customDelay(100);
     rotateToAngle(10, 10);
     customDelay(100);
     rotateToAngle(30, 10);
@@ -284,9 +309,9 @@ void loop()
     moveDistance(1000, true);
     // moveDistance(80);
     customDelay(10);
-    rotateToAngle(-20, 10);
+    rotateToAngle(-20, 10, true);
     customDelay(100);
-    rotateToAngle(-40, 10);
+    rotateToAngle(-40, 10, true);
     customDelay(100);
     rotateToAngle(-60, 10);
     customDelay(100);
@@ -650,7 +675,7 @@ void rotateToAngle(double target_angle)
   analogWrite(ENABLE_RIGHT_MOTOR, 0); // control speed of right motor
 }
 
-void rotateToAngle(float target_angle, float tolerance)
+void rotateToAngle(float target_angle, float tolerance, bool fast = false)
 { // tolerance = 2.0
   // float current_angle = 0.0; // initialize current angle
   float current_angle = angle;
@@ -667,7 +692,13 @@ void rotateToAngle(float target_angle, float tolerance)
     // calculate the error and PID output
     error = target_angle - current_angle;
     float pid_output = PIDController(target_angle);
-    float motor_speed = mapToMotorSpeed(pid_output);
+    float motor_speed;
+    if (!fast) {
+      motor_speed = mapToMotorSpeed(pid_output);
+    }
+    else {
+      motor_speed = mapToMotorSpeed2(pid_output);
+    }
 
     // // apply the PID output to the motors (turn in place)
     // // check if pid_output is below minimum motor speed, and if so, set it to minimum motor speed
@@ -718,6 +749,14 @@ float mapToMotorSpeed(float pid_output)
   pid_output = constrain(pid_output, 0.0, 1.0);
   // Map from PID output to motor speed
   return pid_output * (150 - 120) + 150;
+}
+
+float mapToMotorSpeed2(float pid_output)
+{
+  // Ensure pid_output is between 0 and 1
+  pid_output = constrain(pid_output, 0.0, 1.0);
+  // Map from PID output to motor speed
+  return pid_output * (180 - 150) + 150;
 }
 
 void followLine(int stopDistance, bool fastFollow)

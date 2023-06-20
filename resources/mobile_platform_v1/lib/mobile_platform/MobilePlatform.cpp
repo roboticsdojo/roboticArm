@@ -46,10 +46,10 @@ void MobilePlatform::configurePWMFrequency() {
 
 void MobilePlatform::rotateMotor(int rightMotorSpeed, int leftMotorSpeed) {
   // cap max speed
-  if (rightMotorSpeed > 255) rightMotorSpeed = 220;
-  if (rightMotorSpeed < -255) rightMotorSpeed = -220;
-  if (leftMotorSpeed > 255) leftMotorSpeed = 220;
-  if (leftMotorSpeed < -255) leftMotorSpeed = -220;
+  if (rightMotorSpeed > 255) rightMotorSpeed = 200;
+  if (rightMotorSpeed < -255) rightMotorSpeed = -200;
+  if (leftMotorSpeed > 255) leftMotorSpeed = 200;
+  if (leftMotorSpeed < -255) leftMotorSpeed = -200;
   if (rightMotorSpeed > -200 && rightMotorSpeed <= 0) rightMotorSpeed = -180;
   if (rightMotorSpeed < 200 && rightMotorSpeed >= 0) rightMotorSpeed = 180;
   if (leftMotorSpeed > -200 && leftMotorSpeed <= 0) leftMotorSpeed = -180;

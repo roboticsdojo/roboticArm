@@ -2,7 +2,7 @@
 #define PREFERENCES_H
 
 // Mobile Platform
-#define MOTOR_SPEED 150
+#define MOTOR_SPEED 180
 #define RIGHT_SENSOR A0//
 #define MIDDLE_SENSOR A2//
 #define LEFT_SENSOR A8
