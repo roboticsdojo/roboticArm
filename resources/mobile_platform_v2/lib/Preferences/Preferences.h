@@ -15,8 +15,13 @@
 #define RIGHT_MOTOR_PIN1 10
 #define RIGHT_MOTOR_PIN2 4
 
+#define SONAR_NUM 2
+
 #define TRIGPIN 14//12 //4
 #define ECHOPIN 15//11 //7
+
+#define TRIGPINBACK 11 //12 //4
+#define ECHOPINBACK 12 //11 //7
 
 #define CORRECTION 100
 

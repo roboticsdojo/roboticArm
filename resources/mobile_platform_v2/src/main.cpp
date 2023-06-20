@@ -11,27 +11,11 @@ MobilePlatform platform;
 void moveCar(int speedLeft, int speedRight);
 void rotateToAngle(float target_angle, float tolerance, bool fast = false);
 
-// Encoders
-// Motor Parameters
-#define PPR 274.63         // Pulses per revolution for the encoder
-#define wheelDiameter 65.0 // Diameter of the wheel in mm (adjust this to match your setup)
-#define wheelCircumference wheelDiameter *PI
 
-Encoder rightEnc(RIGHT_ENCODER_A_PIN, RIGHT_ENCODER_B_PIN);
-Encoder leftEnc(LEFT_ENCODER_A_PIN, LEFT_ENCODER_B_PIN);
-long oldPositionRight = -999;
-long oldPositionLeft = -999;
-int deviation = 0.5;
-int distanceRight = 0;
-int distanceLeft = 0;
-
-// Function Prototypes
-void setDistanceRight();
-void setDistanceLeft();
 void moveDistance(double distance_mm, bool detectLine = false);
 
-int minSpeed = 150; // Minimum motor speed
-int maxSpeed = 180; // Maximum motor speed
+int minSpeed = 200; // Minimum motor speed
+int maxSpeed = 255; // Maximum motor speed
 
 // MPU 6050
 const int MPU = 0x68;                                           // MPU6050 I2C address
@@ -43,7 +27,7 @@ float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
 float elapsedTime, currentTime, previousTime;
 int c = 0;
 
-float angle; // due to how I orientated my MPU6050 on my car, angle = roll
+float angle; // due to how I orientated my MPU6050 on my car, angle = yaw
 float targetAngle = 0;
 
 // prototypes
@@ -55,12 +39,12 @@ void setGyroReadings();
 // Global variables
 // double Kp = 1.00, Ki = 0.001, Kd = 20.00; // Tune these values
 // double Kp = 8.00, Ki = 25.00, Kd = 35.00; // Tune these values
-double Kp = 0.5, Ki = 0.0002, Kd = 100.00; // Tune these values
+double Kp = 0.2, Ki = 0.000, Kd = 500.00; // Tune these values
 
 double integral = 0, previous_error = 0;
 
 // double Kp_line = 1.0, Ki_line = 0.0, Kd_line = 5.0; // Tune these values
-double Kp_line = 0.05, Ki_line = 0.0002, Kd_line = 20.0; // Tune these values
+double Kp_line = 6.0, Ki_line = 0.0002, Kd_line = 20.0; // Tune these values
 double integral_line = 0, previous_error_line = 0;
 
 double PIDController(double target_heading);
@@ -89,9 +73,10 @@ float mapToMotorSpeed(float pid_output);
 double PIDControllerLine();
 
 // Ultra sonic and distance stuff
-#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters).
+#define MAX_DISTANCE 400 // Maximum distance we want to ping for (in centimeters).
 
 NewPing sonar(TRIGPIN, ECHOPIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+NewPing sonarBack(TRIGPINBACK, ECHOPINBACK, MAX_DISTANCE);
 
 unsigned int pingSpeed = 100; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
 unsigned long pingTimer;      // Holds the next ping time.
@@ -101,6 +86,7 @@ unsigned long previous_time_distance;
 
 // Prototypes
 void echoCheck();
+void echoCheckBack();
 void fastRotate(int target_angle);
 float mapToMotorSpeed2(float pid_output);
 
@@ -133,12 +119,6 @@ void setup()
   // Serial.print("yaw: ");
   // Serial.println(yaw);
 
-  // setDistanceLeft();
-  // setDistanceRight();
-  // Serial.print("distanceLeft: ");
-  // Serial.print(distanceLeft);
-  // Serial.print("\t||\tdistanceRight: ");
-  // Serial.println(distanceRight);
 
   // followLine(0); Ultrasonic ok
   // moveCar(180, 180);
@@ -166,6 +146,14 @@ void setup()
   //   setGyroReadings();
   //   Serial.println(yaw);
   // }
+  // while (true) {
+  //   if (millis() >= pingTimer)
+  //   {
+  //     pingTimer += pingSpeed;      // Set the next ping time.
+  //     sonarBack.ping_timer(echoCheckBack); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+  //   }
+  //   Serial.println(distance);
+  // }
 }
 void loop()
 {
@@ -175,72 +163,53 @@ void loop()
   case PICK_TRAILER:
     rotateToAngle(0, 10);
     customDelay(100);
-    moveDistance(1500);
+    moveDistance(150);
     customDelay(100);
-    rotateToAngle(20, 10);
-    customDelay(100);
-    rotateToAngle(40, 10);
-    customDelay(100);
-    rotateToAngle(60, 10);
+    
+    //Rotate
+    for (int i = 0; i < 90; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
     customDelay(1000);
-    rotateToAngle(90, 2);
+    rotateToAngle(90, 10);
+    
     customDelay(2000); // wait for the trailer to be picked
     state = PICK_ENGINE;
     break;
   case PICK_ENGINE:
     // Rotate
-    rotateToAngle(45, 1, true);
-    customDelay(100);
-    rotateToAngle(-10, 10);
-    customDelay(100);
-    rotateToAngle(-60, 10);
-    customDelay(100);
-    rotateToAngle(-100, 10);
-    customDelay(100);
-    rotateToAngle(-130, 10);
-    customDelay(100);
-    rotateToAngle(-140, 10);
-    customDelay(100);
-    rotateToAngle(-150, 5);
+    for (int i = angle; i > -150; i -= 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+    customDelay(1000);
+    rotateToAngle(-150, 10);
+
     customDelay(1000);
     targetAngle = -(150);
     moveDistance(1000, true); // move and detect line
     customDelay(100);
     moveDistance(100);        // Move past line
-    // new
-    // rotateToAngle(-90, 10);
-    // customDelay(100);
-    // targetAngle = -90;
-    // moveDistance(4000);
-
-    // *******************
     moveDistance(1000, true); // move and detect second line
     customDelay(100);
-    moveDistance(80); // Move past line
-    // Rotate
-    rotateToAngle(-100, 10);
-    customDelay(10);
+
+    moveCar(200, 200);
+    customDelay(200);
+    moveCar(0,0);
+     // Rotate
+    for (int i = angle; i < -90; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+    customDelay(1000);
     rotateToAngle(-90, 10);
-    customDelay(10);
-    rotateToAngle(-60, 10);
-    customDelay(10);
-    // rotateToAngle(-70, 5);
     customDelay(100);
-    targetAngle = -60;
-    minSpeed = 130;
-    maxSpeed = 140;
-    moveDistance(500, true);
-    customDelay(300);
-    rotateToAngle(-80,10);
-    followLine(50); // Follow the  line and Stop when distance <= 50
 
-    customDelay(2000); // wait to pick engine
+    followLine(50); // follow line. Stop at obstacle_distance <= 50 cm
 
-    minSpeed = 150;
-    maxSpeed = 180;
-
-    state = PICK_WHEELS;
-    // state = STOP;
+    // state = PICK_WHEELS;
+    state = STOP;
     break;
   case PICK_WHEELS:
     rotateToAngle(-60, 10, true); // Turn Left
@@ -377,41 +346,8 @@ void moveCar(int speedLeft, int speedRight)
   analogWrite(ENABLE_RIGHT_MOTOR, speedRight); // control speed of right motor
 }
 
-void setDistanceRight()
-{
-  long newPosition = rightEnc.read();
 
-  if (newPosition != oldPositionRight)
-  {
-    oldPositionRight = newPosition;
-
-    double wheelRotations = newPosition / PPR;
-    double distanceTravelled = wheelRotations * wheelCircumference;
-
-    // Serial.print("Distance Travelled Right (mm): ");
-    // Serial.println(distanceTravelled, 3);
-    distanceRight = distanceTravelled;
-  }
-}
-
-void setDistanceLeft()
-{
-  long newPosition = leftEnc.read();
-
-  if (newPosition != oldPositionLeft)
-  {
-    oldPositionLeft = newPosition;
-
-    double wheelRotations = newPosition / PPR;
-    double distanceTravelled = wheelRotations * wheelCircumference;
-
-    // Serial.print("Distance Travelled Left (m): ");
-    // Serial.println(distanceTravelled, 3);
-    distanceLeft = distanceTravelled;
-  }
-}
-
-void moveDistance(double distance_mm, bool detectLine = false)
+void moveDistance(double distance_cm, bool detectLine = false)
 {
   // Reset PID values
   integral = 0;
@@ -419,8 +355,6 @@ void moveDistance(double distance_mm, bool detectLine = false)
 
   setGyroReadings();
   // Reset the encoder readings
-  rightEnc.write(0);
-  leftEnc.write(0);
 
   // Initialize speeds
   int currentSpeedRight = minSpeed; // Start at minSpeed for right wheel
@@ -428,29 +362,32 @@ void moveDistance(double distance_mm, bool detectLine = false)
 
   // Start the motors
   moveCar(currentSpeedLeft, currentSpeedRight);
-  distanceLeft = 0;
-  distanceRight = 0;
   int count = 0;
+
+  sonarBack.ping_timer(echoCheckBack);
+  customDelay(100);
 
   while (true)
   {
     // Update the current distances
-    setDistanceLeft();
-    setDistanceRight();
     // Serial.print("Distance Left: ");
     // Serial.print(distanceLeft);
     // Serial.print("\t||\tDistance Right: ");
     // Serial.println(distanceRight);
     if (abs(angle - targetAngle) > 2 && count > 5)
     {
-      count = 0;
+      count++;
       rotateToAngle(targetAngle, 10);
       integral = 0;
       previous_error = 0;
     }
-    else
+
+    if (count >= 5)
     {
-      count++;
+      count = 0;
+      rotateToAngle(targetAngle, 10);
+      integral = 0;
+      previous_error = 0;
     }
 
     // Get the PID controller output
@@ -464,8 +401,20 @@ void moveDistance(double distance_mm, bool detectLine = false)
     moveCar(currentSpeedLeft, currentSpeedRight);
 
     // If both wheels have traveled the desired distance, stop
-    if (distanceLeft >= distance_mm && distanceRight >= distance_mm)
+    // if (distanceLeft >= distance_mm && distanceRight >= distance_mm)
+    // {
+    //   break;
+    // }
+
+    
+    // Check obstacle distance
+    if (millis() >= pingTimer)
     {
+      pingTimer += pingSpeed;      // Set the next ping time.
+      sonarBack.ping_timer(echoCheckBack); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+    }
+
+    if (distance >= distance_cm) {
       break;
     }
 
@@ -491,8 +440,8 @@ double PIDController(double target_heading)
 
   // Calculate the error
   double error = target_heading - angle;
-  double distance_error = distanceLeft - distanceRight;
-  error = error * 0.7 + distance_error * 0.3;
+  // double distance_error = distanceLeft - distanceRight;
+  // error = error * 0.7 + distance_error * 0.3;
 
   // Proportional term
   double P = Kp * error;
@@ -736,10 +685,24 @@ void echoCheck()
   if (sonar.check_timer())
   { // This is how you check to see if the ping was received.
     // // Here's where you can add code.
-    // Serial.print("Ping: ");
-    // Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    // Serial.println("cm");
+    Serial.print("Ping: ");
+    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    Serial.println("cm");
     distance = sonar.ping_result / US_ROUNDTRIP_CM;
+  }
+  // Don't do anything here!
+}
+
+void echoCheckBack()
+{ // Timer2 interrupt calls this function every 24uS where you can check the ping status.
+  // Don't do anything here!
+  if (sonarBack.check_timer())
+  { // This is how you check to see if the ping was received.
+    // // Here's where you can add code.
+    // Serial.print("Ping: ");
+    // Serial.print(sonarBack.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    // Serial.println("cm");
+    distance = sonarBack.ping_result / US_ROUNDTRIP_CM;
   }
   // Don't do anything here!
 }
@@ -765,8 +728,8 @@ void followLine(int stopDistance, bool fastFollow)
   sonar.ping_timer(echoCheck);
   customDelay(100);
   // Initialize speeds
-  // int currentSpeedRight = minSpeed; // Start at minSpeed for right wheel
-  // int currentSpeedLeft = minSpeed; // Start at minSpeed for left wheel
+  int currentSpeedRight = minSpeed; // Start at minSpeed for right wheel
+  int currentSpeedLeft = minSpeed; // Start at minSpeed for left wheel
 
   previous_time_distance = millis();
   distance = 500;
@@ -788,8 +751,8 @@ void followLine(int stopDistance, bool fastFollow)
     double pidOutput = PIDControllerLine();
 
     // Adjust the speeds
-    // currentSpeedRight = constrain(180 + pidOutput, 0 , 180);
-    // currentSpeedLeft = constrain(180 - pidOutput, 0, 180);
+    currentSpeedRight = constrain(minSpeed + pidOutput, 0 , 254);
+    currentSpeedLeft = constrain(minSpeed - pidOutput, 0, 254);
 
     // if (currentSpeedLeft <= 0)
     //   currentSpeedLeft = constrain(currentSpeedLeft, -180, -150);
@@ -802,17 +765,19 @@ void followLine(int stopDistance, bool fastFollow)
     //   currentSpeedRight = constrain(currentSpeedRight, 150, 180);
 
     // // Apply the new speeds
-    // moveCar(currentSpeedLeft, currentSpeedRight);
-    if (fastFollow)
-    {
-      platform.fastRotateMotor(MOTOR_SPEED + pidOutput, MOTOR_SPEED - pidOutput);
-    }
-    else
-    {
-      platform.rotateMotor(MOTOR_SPEED + pidOutput, MOTOR_SPEED - pidOutput);
-    }
+    moveCar(currentSpeedLeft, currentSpeedRight);
+    // Serial.println(currentSpeedLeft);
+    // Serial.println(currentSpeedRight);
+    // if (fastFollow)
+    // {
+    //   platform.fastRotateMotor(MOTOR_SPEED + pidOutput, MOTOR_SPEED - pidOutput);
+    // }
+    // else
+    // {
+    //   platform.rotateMotor(MOTOR_SPEED + pidOutput, MOTOR_SPEED - pidOutput);
+    // }
 
-    if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 2000))
+    if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 1000))
     {
       break;
     }
