@@ -25,6 +25,7 @@ class MobilePlatform {
 
   public:
     void rotateMotor(int rightMotorSpeed, int leftMotorSpeed);
+    void fastRotateMotor(int rightMotorSpeed, int leftMotorSpeed);
     MobilePlatform();
     Gyro gyro;
     void setup();
