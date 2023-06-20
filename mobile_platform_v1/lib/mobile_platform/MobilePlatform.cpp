@@ -45,40 +45,20 @@ void MobilePlatform::configurePWMFrequency() {
 
 
 void MobilePlatform::rotateMotor(int rightMotorSpeed, int leftMotorSpeed) {
-  // cap max speed
-  if (rightMotorSpeed > 255) rightMotorSpeed = 200;
-  if (rightMotorSpeed < -255) rightMotorSpeed = -200;
-  if (leftMotorSpeed > 255) leftMotorSpeed = 200;
-  if (leftMotorSpeed < -255) leftMotorSpeed = -200;
-  if (rightMotorSpeed > -200 && rightMotorSpeed <= 0) rightMotorSpeed = -180;
-  if (rightMotorSpeed < 200 && rightMotorSpeed >= 0) rightMotorSpeed = 180;
-  if (leftMotorSpeed > -200 && leftMotorSpeed <= 0) leftMotorSpeed = -180;
-  if (leftMotorSpeed < 200 && leftMotorSpeed >= 0) leftMotorSpeed = 180;
+  if (rightMotorSpeed > 240) rightMotorSpeed = 240;
+  if (rightMotorSpeed < -240) rightMotorSpeed = -240;
+  if (leftMotorSpeed > 240) leftMotorSpeed = 240;
+  if (leftMotorSpeed < -240) leftMotorSpeed = -240;
+  if (rightMotorSpeed > -200 && rightMotorSpeed <= 0) rightMotorSpeed = -220;
+  if (rightMotorSpeed < 200 && rightMotorSpeed >= 0) rightMotorSpeed = 220;
+  if (leftMotorSpeed > -200 && leftMotorSpeed <= 0) leftMotorSpeed = -220;
+  if (leftMotorSpeed < 200 && leftMotorSpeed >= 0) leftMotorSpeed = 220;
   
   setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, rightMotorSpeed);
   setMotorState(LEFT_MOTOR_PIN1, LEFT_MOTOR_PIN2, leftMotorSpeed);
   
   analogWrite(ENABLE_RIGHT_MOTOR, abs(rightMotorSpeed));
   analogWrite(ENABLE_LEFT_MOTOR, abs(leftMotorSpeed));
-  
-}
-
-void MobilePlatform::fastRotateMotor(int rightMotorSpeed, int leftMotorSpeed) {
-  if (rightMotorSpeed > 255) rightMotorSpeed = 230;
-  if (rightMotorSpeed < -255) rightMotorSpeed = -230;
-  if (leftMotorSpeed > 255) leftMotorSpeed = 230;
-  if (leftMotorSpeed < -255) leftMotorSpeed = -230;
-  if (rightMotorSpeed > -200 && rightMotorSpeed <= 0) rightMotorSpeed = -230;
-  if (rightMotorSpeed < 200 && rightMotorSpeed >= 0) rightMotorSpeed = 230;
-  if (leftMotorSpeed > -200 && leftMotorSpeed <= 0) leftMotorSpeed = -230;
-  if (leftMotorSpeed < 200 && leftMotorSpeed >= 0) leftMotorSpeed = 230;
-  
-  analogWrite(ENABLE_RIGHT_MOTOR, abs(rightMotorSpeed));
-  analogWrite(ENABLE_LEFT_MOTOR, abs(leftMotorSpeed));
-  
-  setMotorState(RIGHT_MOTOR_PIN1, RIGHT_MOTOR_PIN2, rightMotorSpeed);
-  setMotorState(LEFT_MOTOR_PIN1, LEFT_MOTOR_PIN2, leftMotorSpeed);
-  
 }
 
 void MobilePlatform::setMotorState(int motorPin1, int motorPin2, int motorSpeed) {
