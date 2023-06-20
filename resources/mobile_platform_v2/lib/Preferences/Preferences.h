@@ -15,7 +15,6 @@
 #define RIGHT_MOTOR_PIN1 10
 #define RIGHT_MOTOR_PIN2 4
 
-
 #define TRIGPIN 14//12 //4
 #define ECHOPIN 15//11 //7
 
