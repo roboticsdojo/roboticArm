@@ -5,12 +5,6 @@ import json
 from datetime import datetime
 
 
-# Initialize Inference Model
-rf = Roboflow(api_key="8kLxlVgusB4R1fsKc2DX")
-project = rf.workspace().project("roboken-object-detection")
-model = project.version(1).model
-
-
 # Initialize Camera
 cap = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
 # Set Dimensions
@@ -141,15 +135,3 @@ def video_snap_infer():
 # infer_from_snapshot()
 # video_stream()
 video_snap_infer()
-
-# # test-image
-# test_image = 'test_image.jpg'
-
-# # infer on a local image
-# result = model.predict(test_image, confidence=40, overlap=30)
-
-# # print result
-# print(result.json())
-
-# # save result
-# result.save("test_result.jpg")
