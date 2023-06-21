@@ -4,7 +4,7 @@ import RPi.GPIO as GPIO
 from datetime import datetime
 import time
 import cv2
-
+import json
 
 # Setup Camera
 cap = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
@@ -39,6 +39,7 @@ def video_snap_infer():
         now = datetime.now()
 
         ret, frame = cap.read()
+        flipped_frame = cv2.flip(frame, -1)  # flip both axes
         if not ret:
             print("Failed to Read Camera Frame")
             break
@@ -53,34 +54,50 @@ def video_snap_infer():
         # Re-position Window
         cv2.namedWindow(live_window)
         cv2.moveWindow(live_window, 0, 0)
-        cv2.imshow(live_window, frame)
+        cv2.imshow(live_window, flipped_frame)
 
         if cv2.waitKey(1) & 0xFF == ord('l'):
             # Infer on snapshot
             print(f"[{now}]> Infer on snapshot")
-            inference_result = infer(frame)
+            inference_result = infer(flipped_frame)[0]
 
             print("\n-------------------------\n")
-            print(inference_result[0].boxes)
+            print(inference_result)
             print("\n-------------------------\n")
 
             # Visualize Result
+            '''
+            cv2.rectangle(img, (x1, y1), (x2, y2), (255,0,0), 2)
+
+
+            x1,y1 ------
+            |          |
+            |          |
+            |          |
+            --------x2,y2
+            
+            image = cv2.imread('testimage.jpg')
+            height, width, channels = image.shape
+            start_point = (0,0)
+            end_point = (width, height)
+            color = (0,0,255)
+            thickness = 5
+
+            image = cv2.rectangle(image, start_point, end_point, color, thickness)
+            cv2.imshow('Rectangle',image)
+            '''
+
             # https://stackoverflow.com/questions/75324341/yolov8-get-predicted-bounding-box
-            for r in inference_result:
-                print(f"r: {r}")
+            annotator = Annotator(flipped_frame)
+            boxes = inference_result.boxes
 
-                annotator = Annotator(frame)
+            for box in boxes:
 
-                boxes = r.boxes
-                print(f"boxes: {boxes}")
-                for box in boxes:
-                    print(f"box: {box}")
-
-                    # get box coordinates in (top, left, bottom, right) format
-                    b = box.xyxy[0]
-                    c = box.cls
-                    annotator.box_label(b, model.names[int(c)])
-                    print(f"Box: {b}, Class: {c}")
+                # get box coordinates in (top, left, bottom, right) format
+                b = box.xyxy[0]
+                c = box.cls
+                print(f"Box: {b}, Class: {c}")
+                annotator.box_label(b, model.names[int(c)])
 
             inference_frame = annotator.result()
             inference_win = 'YOLO V8 Inference Result'
@@ -95,22 +112,35 @@ def video_snap_infer():
                 # ? Manually draw bounding boxes and save those for visualization
                 # ? Realtime video feed for debugging.
                 # inference_result.save(f"./logs/images/{now}.jpg")
-                cv2.imwrite(f'./logs/images/{now} None.jpg', frame)
+                # cv2.imwrite(f'./logs/images/{now} None.jpg', frame)
                 print(f"[{now}]> Save result as image [SUCCESS]")
             else:
                 print(f"[{now}]> No prediction")
                 # Save frame
-                cv2.imwrite(f'./logs/images/{now} None.jpg', frame)
+                # cv2.imwrite(f'./logs/images/{now} None.jpg', frame)
 
-            #! failed
-            # ? json
-            inference_result[0].save_txt(f"./logs/labels/results.txt")
+            # ? failed > only writes if detection happens
+            # ? manually save json > log every result for debugging
+            print("\n++++++++++++++++++\n")
+            inference_result.save_txt(f"./logs/labels/results.txt")
+            inference_result_json = inference_result.tojson()
+            print(inference_result_json)
+            print("\n++++++++++++++++++\n")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
     cv2.destroyAllWindows()
+
+# https://stackoverflow.com/questions/56115874/how-to-convert-bounding-box-x1-y1-x2-y2-to-yolo-style-x-y-w-h
+
+
+def yolobbox2bbox(x, y, w, h):
+    x1, y1 = x-w/2, y-h/2
+    x2, y2 = x+w/2, y+h/2
+
+    return x1, y1, x2, y2
 
 
 video_snap_infer()
