@@ -109,22 +109,32 @@ def video_snap_infer():
             # * Log Results
             if inference_result:
                 # save visualization
-                # ? Manually draw bounding boxes and save those for visualization
-                # ? Realtime video feed for debugging.
-                # inference_result.save(f"./logs/images/{now}.jpg")
-                # cv2.imwrite(f'./logs/images/{now} None.jpg', frame)
+                # // inference_result.save(f"./logs/images/{now}.jpg")
+                cv2.imwrite(f'./logs/images/{now} None.jpg', inference_frame)
                 print(f"[{now}]> Save result as image [SUCCESS]")
             else:
                 print(f"[{now}]> No prediction")
                 # Save frame
-                # cv2.imwrite(f'./logs/images/{now} None.jpg', frame)
+                cv2.imwrite(f'./logs/images/{now} None.jpg', inference_frame)
+                print(f"[{now}]> Save result as image [SUCCESS]")
 
-            # ? failed > only writes if detection happens
-            # ? manually save json > log every result for debugging
             print("\n++++++++++++++++++\n")
+            # ? WARNING: > only writes if detection happens
             inference_result.save_txt(f"./logs/labels/results.txt")
+
+            print(f"inference_result_type: {type(inference_result)}")
+
+            # ? manually format json
             inference_result_json = inference_result.tojson()
-            print(inference_result_json)
+            inference_result_json_object = json.dumps(
+                inference_result_json, indent=4)
+            print(inference_result_json, type(inference_result_json))
+            # print(
+            #     f"x1, y1: {inference_result_json['box']}, {inference_result_json['box']}")
+            with open(f"./logs/labels/results2.json", "a") as f:
+                # json.dumps(inference_result_json, f)
+                f.write(inference_result_json_object)
+
             print("\n++++++++++++++++++\n")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
