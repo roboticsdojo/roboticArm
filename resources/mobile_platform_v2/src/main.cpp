@@ -39,7 +39,9 @@ void setGyroReadings();
 // Global variables
 // double Kp = 1.00, Ki = 0.001, Kd = 20.00; // Tune these values
 // double Kp = 8.00, Ki = 25.00, Kd = 35.00; // Tune these values
-double Kp = 0.2, Ki = 0.000, Kd = 500.00; // Tune these values
+// double Kp = 0.2, Ki = 0.000, Kd = 500.00; // Tune these values
+double Kp = 0.5, Ki = 0.0002, Kd = 100.00; // Tune these values
+
 
 double integral = 0, previous_error = 0;
 
@@ -48,7 +50,7 @@ double Kp_line = 6.0, Ki_line = 0.0002, Kd_line = 20.0; // Tune these values
 double integral_line = 0, previous_error_line = 0;
 
 double PIDController(double target_heading);
-void rotateToAngle(double target_angle);
+void rotateToAngle(double target_angle); // This is not in use // can be removed
 
 void followLine(int stopDistance, bool fastFollow = false);
 
@@ -59,6 +61,7 @@ enum State
   PICK_WHEELS,
   BACK_TO_CHASIS,
   PICK_CABIN,
+  CABIN_TO_CHASIS,
   BACK_TO_START,
   STOP
 };
@@ -163,7 +166,10 @@ void loop()
   case PICK_TRAILER:
     rotateToAngle(0, 10);
     customDelay(100);
-    moveDistance(150);
+    // moveDistance(185);
+    moveCar(200, 200);
+    customDelay(6000);
+    moveCar(0, 0);
     customDelay(100);
     
     //Rotate
@@ -172,7 +178,7 @@ void loop()
       customDelay(10);
     }
     customDelay(1000);
-    rotateToAngle(90, 10);
+    rotateToAngle(90, 10) ;
     
     customDelay(2000); // wait for the trailer to be picked
     state = PICK_ENGINE;
@@ -188,120 +194,179 @@ void loop()
 
     customDelay(1000);
     targetAngle = -(150);
-    moveDistance(1000, true); // move and detect line
+    moveDistance(1000, true); // move and detect line // first line
     customDelay(100);
+    minSpeed = 100;
+    maxSpeed = 100;
     moveDistance(100);        // Move past line
     moveDistance(1000, true); // move and detect second line
     customDelay(100);
+
+    // moveCar(200, 200);
+    // customDelay(100);
+    // moveCar(0,0);
+     // Rotate
+    for (int i = angle; i < -100; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+    // customDelay(1000);
+    // rotateToAngle(-90, 10);
+    customDelay(100);
+
+    followLine(50); // follow line. Stop at obstacle_distance <= 50 cm
+
+    customDelay(2000); // wait to pick engine
+    state = PICK_WHEELS;
+    // state = STOP;
+    break;
+  case PICK_WHEELS:
+    for (int i = angle; i < 0; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+    customDelay(1000);
+    rotateToAngle(0, 10);
+    customDelay(100);
+    
+    // moveDistance(50); // Move past line, just in case
+    moveCar(200,200);
+    customDelay(500);
+    moveCar(0, 0);
+    customDelay(100);
+    targetAngle = 0;
+    moveDistance(1500, true);
 
     moveCar(200, 200);
     customDelay(200);
     moveCar(0,0);
      // Rotate
-    for (int i = angle; i < -90; i += 5) {
+    for (int i = angle; i < -90; i -= 5) {
       rotateToAngle(i, 2);
       customDelay(10);
     }
     customDelay(1000);
     rotateToAngle(-90, 10);
     customDelay(100);
-
-    followLine(50); // follow line. Stop at obstacle_distance <= 50 cm
-
-    // state = PICK_WHEELS;
-    state = STOP;
-    break;
-  case PICK_WHEELS:
-    rotateToAngle(-60, 10, true); // Turn Left
-    customDelay(100);
-    rotateToAngle(-40, 10);
-    customDelay(100);
-    rotateToAngle(-20, 10);
-    customDelay(100);
-    // rotateToAngle(0, 10);
-    targetAngle = 0;
-    minSpeed = 130;
-    maxSpeed =150;
-    moveDistance(50); // Move past line, just in case
-    moveDistance(800, true);
-    // moveDistance(100); // Move past line, just in case
-    // customDelay(100);
-    rotateToAngle(-30, 10);
-    customDelay(100);
-    rotateToAngle(-45, 10);
-    customDelay(100);
-    rotateToAngle(-60, 10);
-    customDelay(100);
-    rotateToAngle(-75, 10);
-    customDelay(100);
-    rotateToAngle(-90, 10); // Rotate 180
-    customDelay(100);
-    // targetAngle = -110;
-    // moveDistance(1000, true); // Move Straight until meet line
-    // rotateToAngle(-90, 10); // Turn Right
+    
     customDelay(2000); // Wait to pick wheels
-    state = BACK_TO_CHASIS;
-    // state = STOP;
-    break;
-  case BACK_TO_CHASIS:
-    minSpeed = 150;
-    maxSpeed =180;
-    rotateToAngle(60, 10);
-    moveDistance(80);
-    customDelay(100);
-    rotateToAngle(10, 10);
-    customDelay(100);
-    rotateToAngle(30, 10);
-    customDelay(100);
-    rotateToAngle(90, 10); // Rotate 180
-    customDelay(100);
-    targetAngle = 120;
-    moveDistance(500, true);
-    customDelay(50);
-    followLine(50);    // Follow Line to chasis and Stop at distance <= 50
-    customDelay(2000); // Wait to drop staff
     state = PICK_CABIN;
     // state = STOP;
     break;
   case PICK_CABIN:
-    rotateToAngle(60, 10);
+    // Reverse
+    moveCar(-200, -200);
+    customDelay(4000);
+    moveCar(0, 0);
     customDelay(100);
-    rotateToAngle(40, 10);
+
+    // rotate to face cabin line
+    for (int i = angle; i < 0; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
     customDelay(100);
-    rotateToAngle(20, 10);
-    customDelay(100);
-    rotateToAngle(0, 10);
+    moveCar(200, 200);
+    customDelay(2000);
+    moveCar(0, 0);
     customDelay(100);
     targetAngle = 0;
-    moveDistance(100); // move past line
-    moveDistance(600, true);
-    moveDistance(100); // move past line
-    moveDistance(1000, true);
-    // moveDistance(80);
-    customDelay(10);
-    rotateToAngle(-20, 10, true);
+
+    // detect line
+    moveDistance(1000, true);    // minSpeed = 150;
+    moveCar(150, 150);
+
+    // rotate to face line
+    moveCar(150, 150);
     customDelay(100);
-    rotateToAngle(-40, 10, true);
+    moveCar(0, 0);
     customDelay(100);
-    rotateToAngle(-60, 10);
+
     customDelay(100);
-    rotateToAngle(-90, 10);
+    for (int i = angle; i > -80; i -= 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
     customDelay(100);
-    targetAngle = -90;
-    minSpeed = 200;
-    maxSpeed = 220;
-    moveDistance(2000);
-    // followLine(50, true); // Set true to follow line faster. Helps with ramp
-    // Climb ramp
-    // Stop when distance <= 50
-    // Wait to pick cabin
-    // Rotate 180
-    // Return Cabin to chasis
-    // Wait to drop
-    // state = BACK_TO_START;
-    state = STOP;
+    followLine(50);
+
+    customDelay(2000);// wait to pick cabin
+    
+    state = BACK_TO_CHASIS;
+    // state = STOP;
+    break;
+  case BACK_TO_CHASIS:
+    moveCar(-100, -100);
+    customDelay(6000);
+    moveCar(0, 0);
+
+    for (int i = angle; i < 140; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+    customDelay(100);
+    
+    moveCar(100, 100);
+    customDelay(1000);
+    moveCar(0, 0);
+    targetAngle = 140;
+    moveDistance(1000, true); // first line
+
+    moveCar(100, 100);
+    customDelay(500);
+    moveCar(0, 0);
+
+
+    moveDistance(1000, true); // detect second line
+
+    moveCar(100, 100);
+    customDelay(100);
+    moveCar(0, 0);
+
+    for (int i = angle; i > 100; i -= 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+    customDelay(100);
+    followLine(50);
+    
+    customDelay(2000); // wait to place
+    state = BACK_TO_START;
+  
   case BACK_TO_START:
     // Go back to starting position
+    targetAngle = 170;
+    for (int i = angle; i < 170; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+
+    moveCar(150, 150);
+    customDelay(100);
+    moveCar(0, 0);
+
+    moveDistance(1000, true);
+
+    moveCar(100, 100);
+    customDelay(100);
+    moveCar(0, 0);
+
+    for (int i = angle; i > 90; i -= 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+    customDelay(100);
+    followLine(80);
+
+    for (int i = angle; i < 150; i += 5) {
+      rotateToAngle(i, 2);
+      customDelay(10);
+    }
+
+    moveCar(200, 200);
+    customDelay(1000);
+    moveCar(0, 0);
+
     state = STOP;
     break;
   case STOP:
@@ -345,7 +410,6 @@ void moveCar(int speedLeft, int speedRight)
   analogWrite(ENABLE_LEFT_MOTOR, speedLeft);   // control speed of left motor
   analogWrite(ENABLE_RIGHT_MOTOR, speedRight); // control speed of right motor
 }
-
 
 void moveDistance(double distance_cm, bool detectLine = false)
 {
@@ -414,10 +478,13 @@ void moveDistance(double distance_cm, bool detectLine = false)
       sonarBack.ping_timer(echoCheckBack); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
     }
 
-    if (distance >= distance_cm) {
+    if (distance_cm <= MAX_DISTANCE && distance >= distance_cm) {
       break;
     }
 
+    // Reads black line and stop.
+    // For white line, invert the values.
+    // eg. if (detectLine && (analogRead(LEFT_SENSOR) < 150 || analogRead(RIGHT_SENSOR) < 150))
     if (detectLine && (analogRead(LEFT_SENSOR) > 650 || analogRead(RIGHT_SENSOR) > 650))
     {
       break;
@@ -712,7 +779,7 @@ float mapToMotorSpeed(float pid_output)
   // Ensure pid_output is between 0 and 1
   pid_output = constrain(pid_output, 0.0, 1.0);
   // Map from PID output to motor speed
-  return pid_output * (150 - 120) + 150;
+  return pid_output * (100 - 80) + 80;
 }
 
 float mapToMotorSpeed2(float pid_output)
@@ -777,7 +844,7 @@ void followLine(int stopDistance, bool fastFollow)
     //   platform.rotateMotor(MOTOR_SPEED + pidOutput, MOTOR_SPEED - pidOutput);
     // }
 
-    if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 1000))
+    if (distance <= stopDistance && ((millis() - PREVIOUS_TIME) > 2000))
     {
       break;
     }
