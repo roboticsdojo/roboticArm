@@ -34,6 +34,22 @@ def camera_inference():
     return (x, y, z)
 
 
+def get_centroids(coordinates: list):
+    centroids = []
+
+    for coordinate in coordinates:
+        x1 = int(coordinate['x1'])
+        x2 = int(coordinate['x2'])
+        y1 = int(coordinate['y1'])
+        y2 = int(coordinate['y2'])
+
+        x = (x1 + x2) // 2
+        y = (y1 + y2) // 2
+        centroids.append((x, y))
+
+    return centroids
+
+
 def video_snap_infer():
     while cap.isOpened():
         now = datetime.now()
@@ -59,11 +75,11 @@ def video_snap_infer():
         if cv2.waitKey(1) & 0xFF == ord('l'):
             # Infer on snapshot
             print(f"[{now}]> Infer on snapshot")
-            inference_result = infer(flipped_frame)[0]
-
-            print("\n-------------------------\n")
+            inference_result = infer(flipped_frame)
             print(inference_result)
-            print("\n-------------------------\n")
+
+            centroids = get_centroids(inference_result)
+            print(centroids)
 
             # Visualize Result
             '''
@@ -87,70 +103,18 @@ def video_snap_infer():
             cv2.imshow('Rectangle',image)
             '''
 
-            # https://stackoverflow.com/questions/75324341/yolov8-get-predicted-bounding-box
-            annotator = Annotator(flipped_frame)
-            boxes = inference_result.boxes
-
-            for box in boxes:
-
-                # get box coordinates in (top, left, bottom, right) format
-                b = box.xyxy[0]
-                c = box.cls
-                print(f"Box: {b}, Class: {c}")
-                annotator.box_label(b, model.names[int(c)])
-
-            inference_frame = annotator.result()
-            inference_win = 'YOLO V8 Inference Result'
-            # Re-position Window
-            cv2.namedWindow(inference_win)
-            cv2.moveWindow(inference_win, 640, 0)
-            cv2.imshow(inference_win, inference_frame)
-
-            # * Log Results
-            if inference_result:
-                # save visualization
-                # // inference_result.save(f"./logs/images/{now}.jpg")
-                cv2.imwrite(f'./logs/images/{now} None.jpg', inference_frame)
-                print(f"[{now}]> Save result as image [SUCCESS]")
-            else:
-                print(f"[{now}]> No prediction")
-                # Save frame
-                cv2.imwrite(f'./logs/images/{now} None.jpg', inference_frame)
-                print(f"[{now}]> Save result as image [SUCCESS]")
-
-            print("\n++++++++++++++++++\n")
-            # ? WARNING: > only writes if detection happens
-            inference_result.save_txt(f"./logs/labels/results.txt")
-
-            print(f"inference_result_type: {type(inference_result)}")
-
-            # ? manually format json
-            inference_result_json = inference_result.tojson()
-            inference_result_json_object = json.dumps(
-                inference_result_json, indent=4)
-            print(inference_result_json, type(inference_result_json))
-            # print(
-            #     f"x1, y1: {inference_result_json['box']}, {inference_result_json['box']}")
-            with open(f"./logs/labels/results2.json", "a") as f:
-                # json.dumps(inference_result_json, f)
-                f.write(inference_result_json_object)
-
-            print("\n++++++++++++++++++\n")
-
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
     cv2.destroyAllWindows()
 
-# https://stackoverflow.com/questions/56115874/how-to-convert-bounding-box-x1-y1-x2-y2-to-yolo-style-x-y-w-h
+# # https://stackoverflow.com/questions/56115874/how-to-convert-bounding-box-x1-y1-x2-y2-to-yolo-style-x-y-w-h
+# def yolobbox2bbox(x, y, w, h):
+#     x1, y1 = x-w/2, y-h/2
+#     x2, y2 = x+w/2, y+h/2
 
-
-def yolobbox2bbox(x, y, w, h):
-    x1, y1 = x-w/2, y-h/2
-    x2, y2 = x+w/2, y+h/2
-
-    return x1, y1, x2, y2
+#     return x1, y1, x2, y2
 
 
 video_snap_infer()
