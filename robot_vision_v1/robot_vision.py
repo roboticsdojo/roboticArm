@@ -34,6 +34,22 @@ def camera_inference():
     return (x, y, z)
 
 
+def get_centroids(coordinates: list):
+    centroids = []
+
+    for coordinate in coordinates:
+        x1 = int(coordinate['x1'])
+        x2 = int(coordinate['x2'])
+        y1 = int(coordinate['y1'])
+        y2 = int(coordinate['y2'])
+
+        x = (x1 + x2) // 2
+        y = (y1 + y2) // 2
+        centroids.append((x, y))
+
+    return centroids
+
+
 def video_snap_infer():
     while cap.isOpened():
         now = datetime.now()
@@ -61,6 +77,9 @@ def video_snap_infer():
             print(f"[{now}]> Infer on snapshot")
             inference_result = infer(flipped_frame)
             print(inference_result)
+
+            centroids = get_centroids(inference_result)
+            print(centroids)
 
             # Visualize Result
             '''
