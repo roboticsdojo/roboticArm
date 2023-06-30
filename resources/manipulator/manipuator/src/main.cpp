@@ -8,11 +8,13 @@ Servo j1Servo;
 Servo j2Servo;
 Servo j3Servo;
 Servo j4Servo;
+Servo gServo;
 
 #define JOINT_1 2
 #define JOINT_2 3
 #define JOINT_3 4
 #define JOINT_4 5
+#define GRIPPER 6
 
 // Initial angles
 float initialTheta1 = 90.0;
@@ -46,6 +48,7 @@ void setup()
   j2Servo.attach(JOINT_2, 400, 2700);
   j3Servo.attach(JOINT_3, 600, 2600);
   j4Servo.attach(JOINT_4, 600, 2600);
+  gServo.attach(GRIPPER);
 
   j1Servo.write(90);
   j2Servo.write(90);
@@ -74,6 +77,14 @@ void setup()
 
 void loop()
 {
+  gServo.write(90);
+  rampToAngle(90, 60, 180, 90, 1500);
+  gServo.write(0);
+  delay(1000);
+  rampToAngle(90, 90, 0, 180, 2000);
+  gServo.write(90);
+  delay(1000);
+
   // int z = 0;
   // for (z = 0; z <= 200; z+=50)
   // {
@@ -93,8 +104,8 @@ void loop()
   // updateServo();  
   // delay(10); 
   // 
-  calculateInverseKinematics(300, 200, 0, 0);
-  // calculateInverseKinematics(300, -400, 0, 0);
+  // calculateInverseKinematics(300, 200, 0, 0);
+  // calculateInverseKinematics(300, 0, 0, 0);
 
 }
 
@@ -197,7 +208,7 @@ void rampToAngle(double s1, double s2, double s3, double s4, unsigned long t, bo
   servo3Ramp.go(s3,t, LINEAR, ONCEFORWARD);
   servo4Ramp.go(s4,t, LINEAR, ONCEFORWARD);
   
-  while (servo1Ramp.isRunning()) {
+  while (servo1Ramp.isRunning() || servo2Ramp.isRunning() || servo3Ramp.isRunning() || servo4Ramp.isRunning()) {
     if (init) {
       servo1Ramp.update();
       servo2Ramp.update();
@@ -209,6 +220,42 @@ void rampToAngle(double s1, double s2, double s3, double s4, unsigned long t, bo
   }
 }
 
+// void calculateInverseKinematics(int x_e, int y_e, int z_e, int phi_e) {
+//   double l1 = 180;
+//   double l2 = 115;
+//   double l3 = 170;
+
+//   double x_w = x_e - (l3 * cos(phi_e));
+//   double y_w = y_e - (l3 * sin(phi_e));
+
+
+//   double theta2 = acos((sq(l1) + sq(l2) - sq(x_w) - sq(y_w)) / (2 * l1 * l2));
+//   double theta1 = (atan2(y_w , x_w)) - acos((sq(x_w) + sq(y_w) + sq(l1) - sq(l2)) / (2 *l1 * sqrt(sq(x_w) + sq(y_w))));
+
+//   // convert to degrees
+//   if (y_e == 0)
+//     theta1 = 90 + (theta1 * (180 / PI)); // remains
+//   else
+//     theta1 = 90 - (theta1 * (180 / PI)); // remains
+//   theta2 = 180 - (theta2 * (180 / PI)) + 90;
+  
+
+//   double theta3 = phi_e - theta1 - theta2;
+
+//   // theta2 = (180 - (theta2 > 90 ? theta2 - 90 : theta2 + 90));
+
+//   // theta1 = map(theta1, -90, 90, 0, 180);
+
+//   rampToAngle(90, abs(theta1) + 20, 180 - (abs(theta2) - 60) + 90, abs(theta3), 2000);
+//   Serial.print("theta 1: "); Serial.print(theta1);
+//   Serial.print("\ttheta 2: "); Serial.print(theta2);
+//   Serial.print("\ttheta 3: "); Serial.print(theta3);
+//   Serial.print("\tx_w: "); Serial.print(x_w);
+//   Serial.print("\ty_w: "); Serial.println(y_w);
+
+  
+// }
+
 void calculateInverseKinematics(int x_e, int y_e, int z_e, int phi_e) {
   double l1 = 180;
   double l2 = 115;
@@ -217,23 +264,29 @@ void calculateInverseKinematics(int x_e, int y_e, int z_e, int phi_e) {
   double x_w = x_e - (l3 * cos(phi_e));
   double y_w = y_e - (l3 * sin(phi_e));
 
+  double c2 = (sq(x_w) + sq(y_w) - sq(l1) - sq(l2)) / (2 * l1 * l2);
+  double s2 = sqrt(1 - sq(c2)); // This will be positive for elbow up, negative for elbow down
 
-  double theta2 = PI - acos((sq(l1) + sq(l2) - sq(x_w) - sq(y_w)) / (2 * l1 * l2));
-  double theta1 = (atan(y_w / x_w)) - acos((sq(x_w) + sq(y_w) + sq(l1) - sq(l2)) / (2 *l1 * sqrt(sq(x_w) + sq(y_w))));
-  double theta3 = phi_e - theta1 - theta2;
+  double theta2 = atan2(s2, c2); // Use atan2 to get the correct quadrant
+
+  double k1 = l1 + l2 * c2;
+  double k2 = l2 * s2;
+  double theta1 = atan2(y_w, x_w) - atan2(k2, k1); // Use atan2 to get the correct quadrant
 
   // convert to degrees
-  theta1 = (theta1 * (180 / PI)); // remains
-  theta2 = theta2 * (180 / PI) + 90;
-  theta3 = theta3 * (180 / PI) - 90;
+  theta1 = (theta1 * (180 / PI)) + 90;
+  theta2 = (theta2 * (180 / PI));
+  theta1 = 180 - theta1;
+  theta2 = (theta2);
 
-  // theta2 = (180 - (theta2 > 90 ? theta2 - 90 : theta2 + 90));
+  double theta3 = 180 + (phi_e - theta1 - theta2);
 
-  // theta1 = map(theta1, -90, 90, 0, 180);
-
-  rampToAngle(90, abs(theta1), abs(theta2), abs(theta3), 2000);
+  rampToAngle(90, abs(theta1), theta2, abs(theta3), 2000);
   Serial.print("theta 1: "); Serial.print(theta1);
   Serial.print("\ttheta 2: "); Serial.print(theta2);
-  Serial.print("\ttheta 3: "); Serial.println(theta3);
+  Serial.print("\ttheta 3: "); Serial.print(theta3);
+  Serial.print("\tx_w: "); Serial.print(x_w);
+  Serial.print("\ty_w: "); Serial.println(y_w);
 }
+
 
